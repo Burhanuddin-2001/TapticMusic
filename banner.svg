@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="160" viewBox="0 0 640 160">
+  <rect x="1.5" y="1.5" width="637" height="157" fill="#121212" stroke="#000000" stroke-width="3"/>
+
+  <!-- music note: drops onto the middle of the title, then lifts slightly -->
+  <g transform="translate(165,-20)">
+    <g>
+      <animateTransform attributeName="transform" type="translate"
+        values="0,0; 0,84; 0,60"
+        keyTimes="0; 0.4; 1"
+        calcMode="spline" keySplines="0.3 0 0.6 1; 0.3 0 0.6 1"
+        dur="0.8s" begin="0.05s" repeatCount="1" fill="freeze"/>
+      <!-- white border layer, drawn slightly larger, sitting behind the black note -->
+      <g fill="#FFFFFF" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
+        <ellipse cx="-5" cy="9" rx="6" ry="4.3" transform="rotate(-18 -5 9)"/>
+        <rect x="0" y="-15" width="3" height="24"/>
+        <path d="M3,-15 C14,-13 15,-4 6,2 C12,-4 10,-11 3,-9 Z"/>
+      </g>
+      <!-- the note itself -->
+      <g fill="#000000">
+        <ellipse cx="-5" cy="9" rx="6" ry="4.3" transform="rotate(-18 -5 9)"/>
+        <rect x="0" y="-15" width="3" height="24"/>
+        <path d="M3,-15 C14,-13 15,-4 6,2 C12,-4 10,-11 3,-9 Z"/>
+      </g>
+    </g>
+  </g>
+
+  <!-- shockwave ring from the point of contact -->
+  <circle cx="165" cy="64" r="4" fill="none" stroke="#FF3D81" stroke-width="2" opacity="0">
+    <animate attributeName="r" values="4;170" dur="0.6s" begin="0.48s" fill="freeze"/>
+    <animate attributeName="opacity" values="0.85;0" dur="0.6s" begin="0.48s" fill="freeze"/>
+  </circle>
+
+  <!-- title, one letter per group so the shockwave can fling each one separately -->
+  <g font-family="Segoe UI, Consolas, monospace" font-size="34" font-weight="700" fill="#F5F5F7">
+    <g><text x="55" y="74">T</text>
+      <animateTransform attributeName="transform" type="translate" additive="sum" values="0,0; -49.5,-10.4; 0,0" keyTimes="0;0.3;1" calcMode="spline" keySplines="0.15 0.7 0.3 1; 0.3 0 0.5 1" dur="1s" begin="0.48s" fill="freeze"/>
+      <animateTransform attributeName="transform" type="rotate" additive="sum" values="0 62 64; -19.8 62 64; 0 62 64" keyTimes="0;0.3;1" calcMode="spline" keySplines="0.15 0.7 0.3 1; 0.3 0 0.5 1" dur="1s" begin="0.48s" fill="freeze"/>
+    </g>
+    <g><text x="75" y="74">a</text>
+      <animateTransform attributeName="transform" type="translate" additive="sum" values="0,0; -40.5,9.6; 0,0" keyTimes="0;0.3;1" calcMode="spline" keySplines="0.15 0.7 0.3 1; 0.3 0 0.5 1" dur="1s" begin="0.48s" fill="freeze"/>
+      <animateTransform attributeName="transform" type="rotate" additive="sum" values="0 82 64; -16.2 82 64; 0 82 64" keyTimes="0;0.3;1" calcMode="spline" keySplines="0.15 0.7 0.3 1; 0.3 0 0.5 1" dur="1s" begin="0.48s" fill="freeze"/>
+    </g>
+    <g><text x="95" y="74">p</text>
+      <animateTransform attributeName="transform" type="translate" additive="sum" values="0,0; -31.5,-8.8; 0,0" keyTimes="0;0.3;1" calcMode="spline" keySplines="0.15 0.7 0.3 1; 0.3 0 0.5 1" dur="1s" begin="0.48s" fill="freeze"/>
+      <animateTransform attributeName="transform" type="rotate" additive="sum" values="0 102 64; -12.6 102 64; 0 102 64" keyTimes="0;0.3;1" calcMode="spline" keySplines="0.15 0.7 0.3 1; 0.3 0 0.5 1" dur="1s" begin="0.48s" fill="freeze"/>
+    </g>
+    <g><text x="115" y="74">t</text>
+      <animateTransform attributeName="transform" type="translate" additive="sum" values="0,0; -22.5,8.0; 0,0" keyTimes="0;0.3;1" calcMode="spline" keySplines="0.15 0.7 0.3 1; 0.3 0 0.5 1" dur="1s" begin="0.48s" fill="freeze"/>
+      <animateTransform attributeName="transform" type="rotate" additive="sum" values="0 122 64; -9.0 122 64; 0 122 64" keyTimes="0;0.3;1" calcMode="spline" keySplines="0.15 0.7 0.3 1; 0.3 0 0.5 1" dur="1s" begin="0.48s" fill="freeze"/>
+    </g>
+    <g><text x="135" y="74">i</text>
+      <animateTransform attributeName="transform" type="translate" additive="sum" values="0,0; -13.5,-7.2; 0,0" keyTimes="0;0.3;1" calcMode="spline" keySplines="0.15 0.7 0.3 1; 0.3 0 0.5 1" dur="1s" begin="0.48s" fill="freeze"/>
+      <animateTransform attributeName="transform" type="rotate" additive="sum" values="0 142 64; -5.4 142 64; 0 142 64" keyTimes="0;0.3;1" calcMode="spline" keySplines="0.15 0.7 0.3 1; 0.3 0 0.5 1" dur="1s" begin="0.48s" fill="freeze"/>
+    </g>
+    <g><text x="155" y="74">c</text>
+      <animateTransform attributeName="transform" type="translate" additive="sum" values="0,0; -4.5,6.4; 0,0" keyTimes="0;0.3;1" calcMode="spline" keySplines="0.15 0.7 0.3 1; 0.3 0 0.5 1" dur="1s" begin="0.48s" fill="freeze"/>
+      <animateTransform attributeName="transform" type="rotate" additive="sum" values="0 162 64; -1.8 162 64; 0 162 64" keyTimes="0;0.3;1" calcMode="spline" keySplines="0.15 0.7 0.3 1; 0.3 0 0.5 1" dur="1s" begin="0.48s" fill="freeze"/>
+    </g>
+    <g><text x="195" y="74">M</text>
+      <animateTransform attributeName="transform" type="translate" additive="sum" values="0,0; 13.5,7.2; 0,0" keyTimes="0;0.3;1" calcMode="spline" keySplines="0.15 0.7 0.3 1; 0.3 0 0.5 1" dur="1s" begin="0.48s" fill="freeze"/>
+      <animateTransform attributeName="transform" type="rotate" additive="sum" values="0 202 64; 5.4 202 64; 0 202 64" keyTimes="0;0.3;1" calcMode="spline" keySplines="0.15 0.7 0.3 1; 0.3 0 0.5 1" dur="1s" begin="0.48s" fill="freeze"/>
+    </g>
+    <g><text x="215" y="74">u</text>
+      <animateTransform attributeName="transform" type="translate" additive="sum" values="0,0; 22.5,-8.0; 0,0" keyTimes="0;0.3;1" calcMode="spline" keySplines="0.15 0.7 0.3 1; 0.3 0 0.5 1" dur="1s" begin="0.48s" fill="freeze"/>
+      <animateTransform attributeName="transform" type="rotate" additive="sum" values="0 222 64; 9.0 222 64; 0 222 64" keyTimes="0;0.3;1" calcMode="spline" keySplines="0.15 0.7 0.3 1; 0.3 0 0.5 1" dur="1s" begin="0.48s" fill="freeze"/>
+    </g>
+    <g><text x="235" y="74">s</text>
+      <animateTransform attributeName="transform" type="translate" additive="sum" values="0,0; 31.5,8.8; 0,0" keyTimes="0;0.3;1" calcMode="spline" keySplines="0.15 0.7 0.3 1; 0.3 0 0.5 1" dur="1s" begin="0.48s" fill="freeze"/>
+      <animateTransform attributeName="transform" type="rotate" additive="sum" values="0 242 64; 12.6 242 64; 0 242 64" keyTimes="0;0.3;1" calcMode="spline" keySplines="0.15 0.7 0.3 1; 0.3 0 0.5 1" dur="1s" begin="0.48s" fill="freeze"/>
+    </g>
+    <g><text x="255" y="74">i</text>
+      <animateTransform attributeName="transform" type="translate" additive="sum" values="0,0; 40.5,-9.6; 0,0" keyTimes="0;0.3;1" calcMode="spline" keySplines="0.15 0.7 0.3 1; 0.3 0 0.5 1" dur="1s" begin="0.48s" fill="freeze"/>
+      <animateTransform attributeName="transform" type="rotate" additive="sum" values="0 262 64; 16.2 262 64; 0 262 64" keyTimes="0;0.3;1" calcMode="spline" keySplines="0.15 0.7 0.3 1; 0.3 0 0.5 1" dur="1s" begin="0.48s" fill="freeze"/>
+    </g>
+    <g><text x="275" y="74">c</text>
+      <animateTransform attributeName="transform" type="translate" additive="sum" values="0,0; 49.5,10.4; 0,0" keyTimes="0;0.3;1" calcMode="spline" keySplines="0.15 0.7 0.3 1; 0.3 0 0.5 1" dur="1s" begin="0.48s" fill="freeze"/>
+      <animateTransform attributeName="transform" type="rotate" additive="sum" values="0 282 64; 19.8 282 64; 0 282 64" keyTimes="0;0.3;1" calcMode="spline" keySplines="0.15 0.7 0.3 1; 0.3 0 0.5 1" dur="1s" begin="0.48s" fill="freeze"/>
+    </g>
+  </g>
+
+  <!-- tagline: a smaller, quieter bump from the same shockwave -->
+  <g>
+    <text x="55" y="108" font-family="Segoe UI, Arial, sans-serif" font-size="15" fill="#9B9BA5">Bring play back to Music.</text>
+    <animateTransform attributeName="transform" type="translate"
+      values="0,0; 0,5; 0,0"
+      keyTimes="0; 0.3; 1"
+      calcMode="spline" keySplines="0.15 0.7 0.3 1; 0.3 0 0.5 1"
+      dur="1s" begin="0.48s" repeatCount="1" fill="freeze"/>
+  </g>
+
+  <text x="55" y="134" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#5A5A62">Built with WinUI 3 for Windows 10/11</text>
+</svg>

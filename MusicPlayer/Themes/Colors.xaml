@@ -1,0 +1,119 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <ResourceDictionary.ThemeDictionaries>
+
+        <!-- "Default" is the Dark theme, and STILL the only one after Step 13 Part B. There is no
+             "Light" dictionary and there must not be one: at runtime Services/ThemeService.cs
+             mutates the .Color of the shared SolidColorBrush objects declared below, which every
+             one of the app's 191 {ThemeResource Brush.*} references resolves to BY REFERENCE. One
+             assignment repaints every consumer at once, including the places an ElementTheme flip
+             cannot reach — popups, tooltips, BadgePill's snapshotted instance, and ScrollBar.xaml's
+             18 StaticResource aliases. A second dictionary would break all three of those.
+             It is also the only way five user-selectable accents can work: there is no x:Key for
+             "swatch 3".
+
+             THE HEX BELOW IS DESIGN-TIME ONLY. ThemeService is the single source of truth and
+             applies the full palette in the App constructor, before any window exists. These values
+             are its Dark + Bauhaus Grid defaults, kept in sync by hand so the Visual Studio designer
+             previews something truthful. If they drift, only the designer is wrong, never the app.
+
+             The HighContrast dictionary was deleted in Step 11: never tested, and it doubled the
+             cost of every colour edit. -->
+        <ResourceDictionary x:Key="Default">
+            <!-- Studio Console 808 dark neutrals, Step 13 Part B. -->
+            <Color x:Key="Color.Background.Canvas">#FF111215</Color>
+            <Color x:Key="Color.Background.Surface">#FF191B1F</Color>
+            <Color x:Key="Color.Background.Elevated">#FF22252B</Color>
+            <!-- Surface.Hover is a step up from Background.Surface, which is what track rows sit on.
+                 The sidebar rail sits on Background.Elevated, where that same value is a ~+2 step
+                 and completely invisible — the rail looked like it had no hover state at all. This
+                 is the matching step for Elevated. Step 10c. The light theme's pair is tuned to the
+                 same surface-to-hover CONTRAST RATIO (~1.10), not the same luminance delta: sRGB is
+                 non-linear near white, so matching the delta there gives a hover 10x too strong. -->
+            <Color x:Key="Color.Surface.Hover">#FF2A2E36</Color>
+            <Color x:Key="Color.Elevated.Hover">#FF32363F</Color>
+            <!-- Deliberately NOT the #FF383C46 the research doc proposed for dark. Measured on the
+                 real surfaces, black is MORE visible than that grey (1.39:1 vs 1.34:1 on Elevated),
+                 and the hard black border is the app's stated identity. Same call for Shadow. -->
+            <Color x:Key="Color.Border.Default">#FF000000</Color>
+            <!-- Accent block: Bauhaus Grid, dark. ThemeService swaps all four per swatch. -->
+            <Color x:Key="Color.Accent.Primary">#FF3B82F6</Color>
+            <Color x:Key="Color.Accent.PrimaryPressed">#FF5492F7</Color>
+            <!-- Accent.OnCanvas is the accent drawn as TEXT or an ICON straight onto a surface, as
+                 opposed to filling a shape. Six sites: the Library's five sort carets and one
+                 TrackRow foreground. It exists because a fill only needs 3:1 while text needs 4.5:1,
+                 and on the light paper canvas the amber and tangerine swatches score 2.78 and 2.79
+                 — those carets would be invisible. For most swatches it equals Accent.Primary. -->
+            <Color x:Key="Color.Accent.OnCanvas">#FF3B82F6</Color>
+            <Color x:Key="Color.Text.Primary">#FFF3EFE6</Color>
+            <Color x:Key="Color.Text.Secondary">#FFA2A7B5</Color>
+            <Color x:Key="Color.Text.OnAccent">#FF121316</Color>
+            <!-- The three status fills are theme-INVARIANT. They are saturated signal colours that
+                 read on either canvas, so they need no light variant — which is also why neither
+                 research doc supplied one. -->
+            <Color x:Key="Color.Status.Success">#FF3DDC84</Color>
+            <Color x:Key="Color.Status.Warning">#FFFFC24B</Color>
+            <Color x:Key="Color.Status.Error">#FFFF5C5C</Color>
+            <!-- Fixed near-black, both themes. A status fill is always bright, so its label is
+                 always dark. Using Text.Primary here was a real bug: paper ink on Status.Error is
+                 2.78:1. Step 13 Part B. -->
+            <Color x:Key="Color.Text.OnStatus">#FF121316</Color>
+            <Color x:Key="Color.Focus">#FF35E0C0</Color>
+            <!-- Hard offset shadow, Step 10c. BLACK — chosen 2026-08-19 after comparing black,
+                 accent pink and a mid grey side by side on the real canvas.
+
+                 Known and accepted trade-off: on the dark canvas black is only a few percent step,
+                 so on open canvas it reads as a thicker bottom-right edge rather than a floating
+                 shadow. It reads properly where it falls on a lighter surface or under the accent
+                 pill. Keeping the accent unspent was judged worth more than shadow visibility.
+                 This is deliberate — do not "fix" it to a lighter colour without asking.
+
+                 Step 13 Part B re-tested this and kept black: the research doc's #FF060708 is
+                 DARKER than the canvas and therefore even less visible (1.08:1 vs 1.18:1). A
+                 lighter-than-canvas shadow was tried and rejected by the user — a bright block
+                 behind a control reads as emitted light, not depth, and pressing it then looks
+                 like switching a lamp off rather than pushing a key down. In the light theme the
+                 same key becomes near-black on paper, which is a 16:1 step and reads properly.
+
+                 This key is the single knob for shadow loudness: retune here and every shadow in
+                 the app follows. -->
+            <Color x:Key="Color.Shadow">#FF000000</Color>
+
+            <SolidColorBrush x:Key="Brush.Background.Canvas" Color="{StaticResource Color.Background.Canvas}" />
+            <SolidColorBrush x:Key="Brush.Background.Surface" Color="{StaticResource Color.Background.Surface}" />
+            <SolidColorBrush x:Key="Brush.Background.Elevated" Color="{StaticResource Color.Background.Elevated}" />
+            <SolidColorBrush x:Key="Brush.Surface.Hover" Color="{StaticResource Color.Surface.Hover}" />
+            <SolidColorBrush x:Key="Brush.Elevated.Hover" Color="{StaticResource Color.Elevated.Hover}" />
+            <SolidColorBrush x:Key="Brush.Border.Default" Color="{StaticResource Color.Border.Default}" />
+            <SolidColorBrush x:Key="Brush.Accent.Primary" Color="{StaticResource Color.Accent.Primary}" />
+            <SolidColorBrush x:Key="Brush.Accent.PrimaryPressed" Color="{StaticResource Color.Accent.PrimaryPressed}" />
+            <SolidColorBrush x:Key="Brush.Accent.OnCanvas" Color="{StaticResource Color.Accent.OnCanvas}" />
+            <SolidColorBrush x:Key="Brush.Text.Primary" Color="{StaticResource Color.Text.Primary}" />
+            <SolidColorBrush x:Key="Brush.Text.Secondary" Color="{StaticResource Color.Text.Secondary}" />
+            <SolidColorBrush x:Key="Brush.Text.OnAccent" Color="{StaticResource Color.Text.OnAccent}" />
+            <SolidColorBrush x:Key="Brush.Status.Success" Color="{StaticResource Color.Status.Success}" />
+            <SolidColorBrush x:Key="Brush.Status.Warning" Color="{StaticResource Color.Status.Warning}" />
+            <SolidColorBrush x:Key="Brush.Status.Error" Color="{StaticResource Color.Status.Error}" />
+            <SolidColorBrush x:Key="Brush.Text.OnStatus" Color="{StaticResource Color.Text.OnStatus}" />
+            <SolidColorBrush x:Key="Brush.Focus" Color="{StaticResource Color.Focus}" />
+            <SolidColorBrush x:Key="Brush.Shadow" Color="{StaticResource Color.Shadow}" />
+
+            <!-- WinUI system focus visual keys. Names are fixed by WinUI. Do NOT rename them.
+                 The SystemControl* prefix is required — WinUI reads these, not the bare names.
+
+                 Primary is an ALIAS, not its own brush. Step 13 Part B: as a separate
+                 SolidColorBrush it was a second instance holding the same colour, so ThemeService
+                 mutating Brush.Focus would have repainted every focus ring in the app EXCEPT the
+                 one WinUI actually draws. The alias form makes it literally the same object.
+                 Same construct ScrollBar.xaml uses 18 times.
+
+                 Secondary stays a real brush: Transparent is not a token and never changes. -->
+            <StaticResource x:Key="SystemControlFocusVisualPrimaryBrush" ResourceKey="Brush.Focus" />
+            <SolidColorBrush x:Key="SystemControlFocusVisualSecondaryBrush" Color="Transparent" />
+        </ResourceDictionary>
+
+    </ResourceDictionary.ThemeDictionaries>
+</ResourceDictionary>

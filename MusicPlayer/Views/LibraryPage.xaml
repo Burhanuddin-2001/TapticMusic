@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="MusicPlayer.Views.LibraryPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:MusicPlayer.Controls">
+
+    <Grid Background="{ThemeResource Brush.Background.Canvas}"
+          Padding="{StaticResource Space.Page.Padding}"
+          RowSpacing="{StaticResource Space.M}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Text.Display, not Heading1: design-plan 5.1. -->
+        <StackPanel Grid.Row="0"
+                    Orientation="Horizontal"
+                    Spacing="{StaticResource Space.M}"
+                    HorizontalAlignment="Left">
+            <TextBlock Style="{StaticResource Text.Display}" Text="Library" />
+            <controls:BadgePill VerticalAlignment="Center"
+                                Text="{x:Bind ViewModel.FolderBadge, Mode=OneWay}" />
+        </StackPanel>
+
+        <Grid Grid.Row="1" ColumnSpacing="{StaticResource Space.S}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBox Grid.Column="0"
+                     Style="{StaticResource PillTextBoxStyle}"
+                     PlaceholderText="Filter this list"
+                     AutomationProperties.Name="Filter this list"
+                     TextChanged="Filter_TextChanged" />
+
+            <Button Grid.Column="1"
+                    Style="{StaticResource PillAccentButtonStyle}"
+                    Content="Play all"
+                    Click="PlayAll_Click" />
+
+            <Button Grid.Column="2"
+                    Content="Shuffle"
+                    Click="Shuffle_Click" />
+        </Grid>
+
+        <!--
+            The header shares the row's column widths exactly. Size.TrackRow.NumberCell,
+            2.75 : 1 : 1 from Gate 0, Size.TrackRow.TimeCell, Space.S spacing, Space.S padding.
+            Change one and you must change both, or the headers stop lining up with the cells.
+
+            Gate 0 chose the caret plus a 2px pink underline. Both are pink because design-plan 4.3
+            makes a state marker turn its glyph Accent.Primary; turquoise is reserved for focus.
+        -->
+        <Grid Grid.Row="2"
+              x:Name="HeaderRow"
+              x:Load="{x:Bind ViewModel.HasTracks, Mode=OneWay}"
+              ColumnSpacing="{StaticResource Space.S}"
+              Padding="{StaticResource Space.S.Thickness}"
+              BorderBrush="{ThemeResource Brush.Border.Default}"
+              BorderThickness="{StaticResource BorderWidth.TrackRow.Bottom}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="{StaticResource Size.TrackRow.NumberCell}" />
+                <ColumnDefinition Width="2.75*" />
+                <ColumnDefinition Width="1*" />
+                <ColumnDefinition Width="1*" />
+                <ColumnDefinition Width="{StaticResource Size.TrackRow.TimeCell}" />
+            </Grid.ColumnDefinitions>
+
+            <Button Grid.Column="0" Style="{StaticResource TrackHeaderButtonStyle}"
+                    Tag="Number" Click="Header_Click" AutomationProperties.Name="Sort by number">
+                <Grid>
+                    <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.XS}" HorizontalAlignment="Center">
+                        <TextBlock Style="{StaticResource Text.Micro}" Text="#" />
+                        <FontIcon Glyph="{x:Bind ViewModel.SortGlyph, Mode=OneWay}"
+                                  FontSize="{StaticResource Size.Glyph.Small}"
+                                  Foreground="{ThemeResource Brush.Accent.OnCanvas}"
+                                  Visibility="{x:Bind ViewModel.SortMarker(ViewModel.Sort, 'Number'), Mode=OneWay}" />
+                    </StackPanel>
+                    <Border VerticalAlignment="Bottom" Height="{StaticResource BorderWidth.Standard}"
+                            Background="{ThemeResource Brush.Accent.Primary}"
+                            Visibility="{x:Bind ViewModel.SortMarker(ViewModel.Sort, 'Number'), Mode=OneWay}" />
+                </Grid>
+            </Button>
+
+            <Button Grid.Column="1" Style="{StaticResource TrackHeaderButtonStyle}"
+                    Tag="Title" Click="Header_Click" AutomationProperties.Name="Sort by title">
+                <Grid>
+                    <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.XS}">
+                        <TextBlock Style="{StaticResource Text.Micro}" Text="TITLE" />
+                        <FontIcon Glyph="{x:Bind ViewModel.SortGlyph, Mode=OneWay}"
+                                  FontSize="{StaticResource Size.Glyph.Small}"
+                                  Foreground="{ThemeResource Brush.Accent.OnCanvas}"
+                                  Visibility="{x:Bind ViewModel.SortMarker(ViewModel.Sort, 'Title'), Mode=OneWay}" />
+                    </StackPanel>
+                    <Border VerticalAlignment="Bottom" Height="{StaticResource BorderWidth.Standard}"
+                            Background="{ThemeResource Brush.Accent.Primary}"
+                            Visibility="{x:Bind ViewModel.SortMarker(ViewModel.Sort, 'Title'), Mode=OneWay}" />
+                </Grid>
+            </Button>
+
+            <Button Grid.Column="2" Style="{StaticResource TrackHeaderButtonStyle}"
+                    Tag="Artist" Click="Header_Click" AutomationProperties.Name="Sort by artist">
+                <Grid>
+                    <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.XS}">
+                        <TextBlock Style="{StaticResource Text.Micro}" Text="ARTIST" />
+                        <FontIcon Glyph="{x:Bind ViewModel.SortGlyph, Mode=OneWay}"
+                                  FontSize="{StaticResource Size.Glyph.Small}"
+                                  Foreground="{ThemeResource Brush.Accent.OnCanvas}"
+                                  Visibility="{x:Bind ViewModel.SortMarker(ViewModel.Sort, 'Artist'), Mode=OneWay}" />
+                    </StackPanel>
+                    <Border VerticalAlignment="Bottom" Height="{StaticResource BorderWidth.Standard}"
+                            Background="{ThemeResource Brush.Accent.Primary}"
+                            Visibility="{x:Bind ViewModel.SortMarker(ViewModel.Sort, 'Artist'), Mode=OneWay}" />
+                </Grid>
+            </Button>
+
+            <Button Grid.Column="3" Style="{StaticResource TrackHeaderButtonStyle}"
+                    Tag="Album" Click="Header_Click" AutomationProperties.Name="Sort by album">
+                <Grid>
+                    <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.XS}">
+                        <TextBlock Style="{StaticResource Text.Micro}" Text="ALBUM" />
+                        <FontIcon Glyph="{x:Bind ViewModel.SortGlyph, Mode=OneWay}"
+                                  FontSize="{StaticResource Size.Glyph.Small}"
+                                  Foreground="{ThemeResource Brush.Accent.OnCanvas}"
+                                  Visibility="{x:Bind ViewModel.SortMarker(ViewModel.Sort, 'Album'), Mode=OneWay}" />
+                    </StackPanel>
+                    <Border VerticalAlignment="Bottom" Height="{StaticResource BorderWidth.Standard}"
+                            Background="{ThemeResource Brush.Accent.Primary}"
+                            Visibility="{x:Bind ViewModel.SortMarker(ViewModel.Sort, 'Album'), Mode=OneWay}" />
+                </Grid>
+            </Button>
+
+            <Button Grid.Column="4" Style="{StaticResource TrackHeaderButtonStyle}"
+                    Tag="Duration" Click="Header_Click" AutomationProperties.Name="Sort by time">
+                <Grid>
+                    <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.XS}" HorizontalAlignment="Right">
+                        <TextBlock Style="{StaticResource Text.Micro}" Text="TIME" />
+                        <FontIcon Glyph="{x:Bind ViewModel.SortGlyph, Mode=OneWay}"
+                                  FontSize="{StaticResource Size.Glyph.Small}"
+                                  Foreground="{ThemeResource Brush.Accent.OnCanvas}"
+                                  Visibility="{x:Bind ViewModel.SortMarker(ViewModel.Sort, 'Duration'), Mode=OneWay}" />
+                    </StackPanel>
+                    <Border VerticalAlignment="Bottom" Height="{StaticResource BorderWidth.Standard}"
+                            Background="{ThemeResource Brush.Accent.Primary}"
+                            Visibility="{x:Bind ViewModel.SortMarker(ViewModel.Sort, 'Duration'), Mode=OneWay}" />
+                </Grid>
+            </Button>
+        </Grid>
+
+        <!--
+            Selection is on again. O-7's fix is TrackRowItemStyle putting the labels inside the
+            container template, so Selected can retarget each label by name. IsItemClickEnabled stays
+            so a single click still plays.
+        -->
+        <ListView Grid.Row="3"
+                  x:Name="TrackList"
+                  x:Load="{x:Bind ViewModel.HasTracks, Mode=OneWay}"
+                  ItemsSource="{x:Bind ViewModel.Tracks, Mode=OneWay}"
+                  ItemContainerStyle="{StaticResource TrackRowItemStyle}"
+                  SelectionMode="Single"
+                  IsItemClickEnabled="True"
+                  ItemClick="Tracks_ItemClick"
+                  RightTapped="Tracks_RightTapped"
+                  AutomationProperties.Name="Library tracks">
+            <!--
+                Step 11. The flyout is on the ListView, not on TrackRowItemStyle. A ContextFlyout
+                set from a Style setter is ONE shared object handed to every row, and they fight
+                over which one is showing. Rows here are templated by a container style with no
+                DataTemplate, so there is no per-item DataContext either: RightTapped records which
+                row was hit before the menu opens.
+
+                The submenu is filled in Opening because the playlist list is live.
+            -->
+            <ListView.ContextFlyout>
+                <MenuFlyout Opening="TrackMenu_Opening">
+                    <MenuFlyoutSubItem x:Name="AddToPlaylistMenu" Text="Add to playlist" />
+                </MenuFlyout>
+            </ListView.ContextFlyout>
+        </ListView>
+
+        <controls:EmptyStateView Grid.Row="3"
+                                 x:Name="EmptyLibraryState"
+                                 x:Load="{x:Bind ViewModel.IsEmpty, Mode=OneWay}"
+                                 Glyph="&#xE93C;"
+                                 Title="No tracks yet"
+                                 Message="Go to Settings and add a folder to scan." />
+
+        <controls:EmptyStateView Grid.Row="3"
+                                 x:Name="NoFilterMatchState"
+                                 x:Load="{x:Bind ViewModel.FilterFoundNothing, Mode=OneWay}"
+                                 Glyph="&#xE721;"
+                                 Title="Nothing matches that filter"
+                                 Message="Clear the filter box to see the whole library." />
+    </Grid>
+</Page>

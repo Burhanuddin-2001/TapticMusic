@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="MusicPlayer.Views.SearchPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:MusicPlayer.Controls"
+    xmlns:models="using:MusicPlayer.Models">
+
+    <Grid Background="{ThemeResource Brush.Background.Canvas}"
+          Padding="{StaticResource Space.Page.Padding}"
+          RowSpacing="{StaticResource Space.L}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0"
+                   Style="{StaticResource Text.Heading1}"
+                   Text="Search"
+                   HorizontalAlignment="Left" />
+
+        <TextBox Grid.Row="1"
+                 Style="{StaticResource PillTextBoxStyle}"
+                 PlaceholderText="Search your library"
+                 AutomationProperties.Name="Search your library"
+                 TextChanged="Term_TextChanged"
+                 HorizontalAlignment="Stretch" />
+
+        <!--
+            The three groups sit in one scroller and each hides itself when it found nothing.
+            The two empty states share this row and only one is ever loaded, so nothing overlaps.
+        -->
+        <ScrollViewer Grid.Row="2">
+            <StackPanel Spacing="{StaticResource Space.L}">
+
+                <StackPanel x:Name="ArtistGroup"
+                            x:Load="{x:Bind ViewModel.HasArtists, Mode=OneWay}"
+                            Spacing="{StaticResource Space.M}">
+                    <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.S}">
+                        <TextBlock Style="{StaticResource Text.Heading2}" Text="Artists" />
+                        <controls:BadgePill VerticalAlignment="Center"
+                                            Text="{x:Bind ViewModel.ArtistCount, Mode=OneWay}" />
+                    </StackPanel>
+                    <ItemsControl ItemsSource="{x:Bind ViewModel.Artists, Mode=OneWay}"
+                                  AutomationProperties.Name="Matching artists">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="x:String">
+                                <TextBlock Style="{StaticResource Text.Body}"
+                                           Text="{x:Bind}"
+                                           TextTrimming="CharacterEllipsis" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+
+                <StackPanel x:Name="AlbumGroup"
+                            x:Load="{x:Bind ViewModel.HasAlbums, Mode=OneWay}"
+                            Spacing="{StaticResource Space.M}">
+                    <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.S}">
+                        <TextBlock Style="{StaticResource Text.Heading2}" Text="Albums" />
+                        <controls:BadgePill VerticalAlignment="Center"
+                                            Text="{x:Bind ViewModel.AlbumCount, Mode=OneWay}" />
+                    </StackPanel>
+                    <ItemsControl ItemsSource="{x:Bind ViewModel.Albums, Mode=OneWay}"
+                                  AutomationProperties.Name="Matching albums">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="x:String">
+                                <TextBlock Style="{StaticResource Text.Body}"
+                                           Text="{x:Bind}"
+                                           TextTrimming="CharacterEllipsis" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+
+                <StackPanel x:Name="TrackGroup"
+                            x:Load="{x:Bind ViewModel.HasTracks, Mode=OneWay}"
+                            Spacing="{StaticResource Space.M}">
+                    <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.S}">
+                        <TextBlock Style="{StaticResource Text.Heading2}" Text="Tracks" />
+                        <controls:BadgePill VerticalAlignment="Center"
+                                            Text="{x:Bind ViewModel.TrackCount, Mode=OneWay}" />
+                    </StackPanel>
+                    <ListView x:Name="TrackList"
+                              ItemsSource="{x:Bind ViewModel.Tracks, Mode=OneWay}"
+                              ScrollViewer.VerticalScrollMode="Disabled"
+                              ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                              SelectionMode="Single"
+                              IsItemClickEnabled="True"
+                              ItemClick="Tracks_ItemClick"
+                              AutomationProperties.Name="Matching tracks">
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="models:Track">
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource Text.Title}"
+                                               Text="{x:Bind Title}"
+                                               TextTrimming="CharacterEllipsis"
+                                               ToolTipService.ToolTip="{x:Bind Title}" />
+                                    <TextBlock Style="{StaticResource Text.Caption}"
+                                               TextTrimming="CharacterEllipsis"><Run Text="{x:Bind Artist}" /><Run Text=" — " /><Run Text="{x:Bind Album}" /></TextBlock>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                </StackPanel>
+
+            </StackPanel>
+        </ScrollViewer>
+
+        <controls:EmptyStateView Grid.Row="2"
+                                 x:Name="NothingSearchedState"
+                                 x:Load="{x:Bind ViewModel.HasNotSearched, Mode=OneWay}"
+                                 Glyph="&#xE721;"
+                                 Title="Nothing searched yet"
+                                 Message="Type a track, artist, or album name." />
+
+        <controls:EmptyStateView Grid.Row="2"
+                                 x:Name="NoResultsState"
+                                 x:Load="{x:Bind ViewModel.HasNoResults, Mode=OneWay}"
+                                 Glyph="&#xE721;"
+                                 Title="No results"
+                                 Message="Nothing in your library matches that." />
+    </Grid>
+</Page>

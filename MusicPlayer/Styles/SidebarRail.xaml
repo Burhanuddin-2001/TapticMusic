@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Style x:Key="SidebarRailStyle" TargetType="ListView">
+        <Setter Property="Width" Value="{StaticResource Size.SidebarRail.Width}" />
+        <Setter Property="Background" Value="{ThemeResource Brush.Background.Elevated}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource Brush.Border.Default}" />
+        <Setter Property="BorderThickness" Value="{StaticResource BorderWidth.SidebarRail.Right}" />
+        <!-- ListView ships with its own padding and item margins. Left alone they eat into the
+             rail and shove the icons off the right edge. The item's own inset comes from
+             Size.SidebarRail.Item.Gap instead, where the shadow can be reasoned about. -->
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="ItemContainerTransitions" Value="{x:Null}" />
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+        <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Hidden" />
+    </Style>
+
+    <Style x:Key="SidebarRailItemStyle" TargetType="ListViewItem">
+        <!-- No fixed Width or Height. The item stretches to the rail's inner width, and
+             MinHeight lets the row grow under OS text scaling. design-plan section 7.1. -->
+        <Setter Property="MinHeight" Value="{StaticResource Size.SidebarRail.Item}" />
+        <Setter Property="MinWidth" Value="0" />
+        <Setter Property="Padding" Value="0" />
+        <!-- Step 11. Horizontal inset so the shadow has somewhere to fall. The rail is 4 wider
+             on each side to pay for it, so the item itself is still 60 square. -->
+        <Setter Property="Margin" Value="{StaticResource Size.SidebarRail.Item.Gap}" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Stretch" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="{ThemeResource Brush.Border.Default}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="{StaticResource Radius.Sharp}" />
+        <Setter Property="Foreground" Value="{ThemeResource Brush.Text.Primary}" />
+        <Setter Property="FocusVisualMargin" Value="{StaticResource Focus.Visual.Margin}" />
+        <!-- Step 16, and the load-bearing one. This rail navigates on SelectionChanged, so a rail
+             item holding focus after a click means a bare Down moves the selection AND changes the
+             page, instead of the arrow reaching the middle column. Trap: see TRAPS.md T-10. -->
+        <Setter Property="AllowFocusOnInteraction" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListViewItem">
+                    <!--
+                        Step 11. Adding the shadow makes this Grid the template ROOT, so
+                        VisualStateManager.VisualStateGroups moved onto it. The VSM reads its
+                        groups off the root only - leaving them on Root compiles clean and
+                        silently kills every state. Same wrap as Styles/Button.xaml.
+                    -->
+                    <Grid x:Name="Layout">
+                        <VisualStateManager.VisualStateGroups>
+                            <!--
+                                ListViewItem combines selection into CommonStates. Leaving the
+                                combined states out means a click lands in an undefined state and
+                                the accent fill only appears once the pointer moves again.
+                            -->
+                            <VisualStateGroup x:Name="CommonStates">
+                                <!-- Step 10c. The rail was the only pressable surface with a colour-only press; it now
+                                     drops 2px like everything else. Both Pressed states push, and the four states
+                                     reachable from them pull back, or the release snaps. Step 11 gave it the
+                                     shadow 10c left off: the item is now inset from the window edge, so there
+                                     is somewhere for it to fall. -->
+                                <VisualState x:Name="Normal">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="PressTransform"
+                                                         Storyboard.TargetProperty="X"
+                                                         To="0"
+                                                         Duration="{StaticResource Motion.Duration.Fast}" />
+                                        <DoubleAnimation Storyboard.TargetName="PressTransform"
+                                                         Storyboard.TargetProperty="Y"
+                                                         To="0"
+                                                         Duration="{StaticResource Motion.Duration.Fast}" />
+                                    </Storyboard>
+                                </VisualState>
+
+                                <VisualState x:Name="PointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="Root.Background" Value="{ThemeResource Brush.Elevated.Hover}" />
+                                        <Setter Target="Shadow.Opacity" Value="1" />
+                                    </VisualState.Setters>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="PressTransform"
+                                                         Storyboard.TargetProperty="X"
+                                                         To="0"
+                                                         Duration="{StaticResource Motion.Duration.Fast}" />
+                                        <DoubleAnimation Storyboard.TargetName="PressTransform"
+                                                         Storyboard.TargetProperty="Y"
+                                                         To="0"
+                                                         Duration="{StaticResource Motion.Duration.Fast}" />
+                                    </Storyboard>
+                                </VisualState>
+
+                                <VisualState x:Name="Pressed">
+                                    <VisualState.Setters>
+                                        <Setter Target="Root.Background" Value="{ThemeResource Brush.Accent.PrimaryPressed}" />
+                                        <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource Brush.Text.OnAccent}" />
+                                        <Setter Target="Shadow.Opacity" Value="1" />
+                                    </VisualState.Setters>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="PressTransform"
+                                                         Storyboard.TargetProperty="X"
+                                                         To="{StaticResource Shadow.Offset}"
+                                                         Duration="{StaticResource Motion.Duration.Fast}" />
+                                        <DoubleAnimation Storyboard.TargetName="PressTransform"
+                                                         Storyboard.TargetProperty="Y"
+                                                         To="{StaticResource Shadow.Offset}"
+                                                         Duration="{StaticResource Motion.Duration.Fast}" />
+                                    </Storyboard>
+                                </VisualState>
+
+                                <VisualState x:Name="Selected">
+                                    <VisualState.Setters>
+                                        <Setter Target="Root.Background" Value="{ThemeResource Brush.Accent.Primary}" />
+                                        <Setter Target="Root.BorderThickness" Value="{StaticResource BorderWidth.Standard.Thickness}" />
+                                        <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource Brush.Text.OnAccent}" />
+                                        <Setter Target="Shadow.Opacity" Value="1" />
+                                    </VisualState.Setters>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="PressTransform"
+                                                         Storyboard.TargetProperty="X"
+                                                         To="0"
+                                                         Duration="{StaticResource Motion.Duration.Fast}" />
+                                        <DoubleAnimation Storyboard.TargetName="PressTransform"
+                                                         Storyboard.TargetProperty="Y"
+                                                         To="0"
+                                                         Duration="{StaticResource Motion.Duration.Fast}" />
+                                    </Storyboard>
+                                </VisualState>
+
+                                <VisualState x:Name="PointerOverSelected">
+                                    <VisualState.Setters>
+                                        <Setter Target="Root.Background" Value="{ThemeResource Brush.Accent.Primary}" />
+                                        <Setter Target="Root.BorderThickness" Value="{StaticResource BorderWidth.Standard.Thickness}" />
+                                        <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource Brush.Text.OnAccent}" />
+                                        <Setter Target="Shadow.Opacity" Value="1" />
+                                    </VisualState.Setters>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="PressTransform"
+                                                         Storyboard.TargetProperty="X"
+                                                         To="0"
+                                                         Duration="{StaticResource Motion.Duration.Fast}" />
+                                        <DoubleAnimation Storyboard.TargetName="PressTransform"
+                                                         Storyboard.TargetProperty="Y"
+                                                         To="0"
+                                                         Duration="{StaticResource Motion.Duration.Fast}" />
+                                    </Storyboard>
+                                </VisualState>
+
+                                <VisualState x:Name="PressedSelected">
+                                    <VisualState.Setters>
+                                        <Setter Target="Root.Background" Value="{ThemeResource Brush.Accent.PrimaryPressed}" />
+                                        <Setter Target="Root.BorderThickness" Value="{StaticResource BorderWidth.Standard.Thickness}" />
+                                        <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource Brush.Text.OnAccent}" />
+                                        <Setter Target="Shadow.Opacity" Value="1" />
+                                    </VisualState.Setters>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="PressTransform"
+                                                         Storyboard.TargetProperty="X"
+                                                         To="{StaticResource Shadow.Offset}"
+                                                         Duration="{StaticResource Motion.Duration.Fast}" />
+                                        <DoubleAnimation Storyboard.TargetName="PressTransform"
+                                                         Storyboard.TargetProperty="Y"
+                                                         To="{StaticResource Shadow.Offset}"
+                                                         Duration="{StaticResource Motion.Duration.Fast}" />
+                                    </Storyboard>
+                                </VisualState>
+
+                                <VisualState x:Name="Disabled">
+                                    <VisualState.Setters>
+                                        <Setter Target="Layout.Opacity" Value="0.4" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+
+                        <Border x:Name="Shadow"
+                                Background="{ThemeResource Brush.Shadow}"
+                                Opacity="0"
+                                Margin="{StaticResource Shadow.Offset.Thickness}" />
+
+                        <Border x:Name="Root"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="{TemplateBinding CornerRadius}">
+
+                            <!-- UIElement.Translation is Composition-backed and throws when set from a VisualState
+                                 Setter. RenderTransform is the approved fallback (D-2). Added in Step 10c. -->
+                            <Border.RenderTransform>
+                                <TranslateTransform x:Name="PressTransform" />
+                            </Border.RenderTransform>
+
+                            <ContentPresenter x:Name="ContentPresenter"
+                                              Content="{TemplateBinding Content}"
+                                              Foreground="{TemplateBinding Foreground}"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center" />
+                        </Border>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

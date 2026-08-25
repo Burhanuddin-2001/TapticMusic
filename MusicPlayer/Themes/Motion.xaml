@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Duration x:Key="Motion.Duration.Fast">0:0:0.080</Duration>
+    <Duration x:Key="Motion.Duration.Standard">0:0:0.200</Duration>
+    <Duration x:Key="Motion.Duration.Slow">0:0:0.300</Duration>
+
+    <!-- How far a page slides on entry, in DIPs. Lives here and not in Metrics.xaml because it is
+         the distance half of a motion, meaningless without Motion.Duration.Slow beside it. Small
+         on purpose: a page that travels far reads as a slideshow, not a transition. -->
+    <x:Double x:Key="Motion.Translate.Page">12</x:Double>
+
+    <!--
+        XAML ONLY. These three keys resolve correctly through {StaticResource} on any Duration
+        property in XAML, but the SAME key read from C# via Application.Current.Resources comes
+        back as a System.Double, and casting it to Duration throws InvalidCastException.
+
+        So declare storyboards in XAML, never build one in code-behind that needs a duration from
+        here. MainWindow.xaml holds the page-enter storyboard for exactly this reason.
+        (Color.* keys DO cast cleanly to Color in C# — it is Duration specifically that does not.)
+        Found the hard way on 2026-08-19.
+    -->
+
+    <!--
+        Easing is NOT a shared resource. An easing function is a DependencyObject
+        and cannot be safely shared across Storyboards. Declare it inline:
+          Mechanical press/release -> NO EasingFunction at all. A DoubleAnimation with none is
+                                      already linear, and WinUI has no LinearEase type — naming one
+                                      is a XamlCompiler WMC0001 error. Found in Step 10c.
+          Enter                    -> <CubicEase EasingMode="EaseOut" />
+          Exit                     -> <CubicEase EasingMode="EaseIn" />
+    -->
+
+</ResourceDictionary>

@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Style TargetType="CheckBox">
+        <Setter Property="Foreground" Value="{ThemeResource Brush.Text.Primary}" />
+        <Setter Property="FontFamily" Value="{StaticResource Font.Text}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSize.Body}" />
+        <Setter Property="FocusVisualMargin" Value="{StaticResource Focus.Visual.Margin}" />
+        <!-- Step 16. A mouse click must not park the keyboard. Trap: see TRAPS.md T-10. -->
+        <Setter Property="AllowFocusOnInteraction" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="CheckBox">
+                    <!-- Transparent, not null: a Panel with no Background is not hit-testable, so
+                         the label and the gap beside the box would swallow clicks. -->
+                    <Grid ColumnSpacing="{StaticResource Space.S}" Background="Transparent">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- VisualStateManager reads the state groups off the template ROOT only.
+                             These sat on the Box border until Step 06, two levels down, so no
+                             state ever applied and the box never turned pink when clicked.
+
+                             CheckBox drives two INDEPENDENT groups, and leaving a state reverts
+                             that state's setters to the template value. So no property may be
+                             written by both groups: until Step 08 both Checked and PointerOver set
+                             Box.Background, and moving the pointer off a ticked box reverted the
+                             fill and threw the tick's pink away. Confirmed on screen 2026-08-18.
+                             Each group now owns its own layer, so the two can never collide. -->
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CheckStates">
+                                <VisualState x:Name="Unchecked" />
+                                <VisualState x:Name="Checked">
+                                    <VisualState.Setters>
+                                        <Setter Target="CheckFill.Opacity" Value="1" />
+                                        <Setter Target="Glyph.Opacity" Value="1" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Indeterminate">
+                                    <VisualState.Setters>
+                                        <Setter Target="CheckFill.Opacity" Value="1" />
+                                        <Setter Target="Glyph.Opacity" Value="1" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <!-- Step 10c. Press geometry animates over Motion.Duration.Fast; every state reachable
+                                     from Pressed must animate it back, or releasing snaps. -->
+                                <VisualState x:Name="Normal">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="PressTransform"
+                                                         Storyboard.TargetProperty="X"
+                                                         To="0"
+                                                         Duration="{StaticResource Motion.Duration.Fast}" />
+                                        <DoubleAnimation Storyboard.TargetName="PressTransform"
+                                                         Storyboard.TargetProperty="Y"
+                                                         To="0"
+                                                         Duration="{StaticResource Motion.Duration.Fast}" />
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState x:Name="PointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="HoverFill.Opacity" Value="1" />
+                                    </VisualState.Setters>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="PressTransform"
+                                                         Storyboard.TargetProperty="X"
+                                                         To="0"
+                                                         Duration="{StaticResource Motion.Duration.Fast}" />
+                                        <DoubleAnimation Storyboard.TargetName="PressTransform"
+                                                         Storyboard.TargetProperty="Y"
+                                                         To="0"
+                                                         Duration="{StaticResource Motion.Duration.Fast}" />
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="PressTransform"
+                                                         Storyboard.TargetProperty="X"
+                                                         To="{StaticResource Shadow.Offset}"
+                                                         Duration="{StaticResource Motion.Duration.Fast}" />
+                                        <DoubleAnimation Storyboard.TargetName="PressTransform"
+                                                         Storyboard.TargetProperty="Y"
+                                                         To="{StaticResource Shadow.Offset}"
+                                                         Duration="{StaticResource Motion.Duration.Fast}" />
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState x:Name="Disabled">
+                                    <VisualState.Setters>
+                                        <Setter Target="Box.Opacity" Value="0.4" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+
+                        <Border x:Name="Box"
+                                Grid.Column="0"
+                                Width="{StaticResource Size.IconButton}"
+                                Height="{StaticResource Size.IconButton}"
+                                Background="{ThemeResource Brush.Background.Surface}"
+                                BorderBrush="{ThemeResource Brush.Border.Default}"
+                                BorderThickness="{StaticResource BorderWidth.Standard.Thickness}"
+                                CornerRadius="{StaticResource Radius.Sharp}">
+                            <!-- UIElement.Translation is Composition-backed and throws when set from a
+                                 VisualState Setter. RenderTransform is the approved fallback (D-2). -->
+                            <Border.RenderTransform>
+                                <TranslateTransform x:Name="PressTransform" />
+                            </Border.RenderTransform>
+
+                            <!-- Both fills are fully opaque and switch between Opacity 0 and 1
+                                 only. Nothing here is translucent. CheckFill sits above HoverFill,
+                                 so hovering a ticked box leaves it pink: design-plan 4.2 defines
+                                 no hover-while-checked state, and 4.3 reserves the accent fill for
+                                 "this one is on", so hover must not be allowed to take it away. -->
+                            <Grid>
+                                <Border x:Name="HoverFill"
+                                        Background="{ThemeResource Brush.Surface.Hover}"
+                                        Opacity="0" />
+                                <Border x:Name="CheckFill"
+                                        Background="{ThemeResource Brush.Accent.Primary}"
+                                        Opacity="0" />
+                                <FontIcon x:Name="Glyph"
+                                          Glyph="&#xE73E;"
+                                          FontSize="{StaticResource Size.Glyph.Small}"
+                                          Foreground="{ThemeResource Brush.Text.OnAccent}"
+                                          Opacity="0"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center" />
+                            </Grid>
+                        </Border>
+                        <ContentPresenter Grid.Column="1"
+                                           Content="{TemplateBinding Content}"
+                                           VerticalAlignment="Center" />
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

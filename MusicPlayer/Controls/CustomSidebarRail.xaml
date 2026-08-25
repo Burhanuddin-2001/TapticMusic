@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<UserControl
+    x:Class="MusicPlayer.Controls.CustomSidebarRail"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--
+        A plain ListView, not NavigationView. NavigationView brings a Windows 11 selection pill
+        and a sliding indicator that fight the flat accent square. design-plan section 4.
+
+        The rail reports the Tag of the item that was picked. It never names a Page type -
+        deciding where a tag leads belongs to MainWindow, not to a leaf control.
+    -->
+    <ListView x:Name="RailItems"
+              Style="{StaticResource SidebarRailStyle}"
+              SelectedIndex="0"
+              SelectionMode="Single"
+              SelectionChanged="RailItems_SelectionChanged"
+              ScrollViewer.VerticalScrollBarVisibility="Hidden"
+              AutomationProperties.Name="Main navigation">
+
+        <ListViewItem Style="{StaticResource SidebarRailItemStyle}" Tag="Dashboard" AutomationProperties.Name="Dashboard">
+            <FontIcon Glyph="&#xE80F;" FontSize="{StaticResource Size.Glyph.Medium}" ToolTipService.ToolTip="Dashboard" />
+        </ListViewItem>
+
+        <ListViewItem Style="{StaticResource SidebarRailItemStyle}" Tag="Library" AutomationProperties.Name="Library">
+            <FontIcon Glyph="&#xE93C;" FontSize="{StaticResource Size.Glyph.Medium}" ToolTipService.ToolTip="Library" />
+        </ListViewItem>
+
+        <ListViewItem Style="{StaticResource SidebarRailItemStyle}" Tag="Search" AutomationProperties.Name="Search">
+            <FontIcon Glyph="&#xE721;" FontSize="{StaticResource Size.Glyph.Medium}" ToolTipService.ToolTip="Search" />
+        </ListViewItem>
+
+        <ListViewItem Style="{StaticResource SidebarRailItemStyle}" Tag="Playlists" AutomationProperties.Name="Playlists">
+            <FontIcon Glyph="&#xE8FD;" FontSize="{StaticResource Size.Glyph.Medium}" ToolTipService.ToolTip="Playlists" />
+        </ListViewItem>
+
+        <ListViewItem Style="{StaticResource SidebarRailItemStyle}" Tag="Settings" AutomationProperties.Name="Settings">
+            <FontIcon Glyph="&#xE713;" FontSize="{StaticResource Size.Glyph.Medium}" ToolTipService.ToolTip="Settings" />
+        </ListViewItem>
+    </ListView>
+</UserControl>

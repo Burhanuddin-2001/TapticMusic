@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Window
+    x:Class="MusicPlayer.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:MusicPlayer.Controls"
+    Title="Taptic Music">
+
+    <Grid x:Name="RootGrid"
+          Loaded="RootGrid_Loaded"
+          Background="{ThemeResource Brush.Background.Canvas}">
+        <Grid.Resources>
+            <!--
+                Step 10c. The page-enter transition.
+
+                Declared here rather than built in code-behind: Motion.Duration.* resolves fine
+                through {StaticResource} in XAML, but the SAME key read from C# via
+                Application.Current.Resources comes back as a System.Double, and casting it to
+                Duration throws InvalidCastException. Found the hard way on 2026-08-19.
+
+                Opacity and a TranslateTransform only — both stay on the compositor at 60fps.
+
+                Targets are assigned per navigation in MainWindow.xaml.cs, because neither the page
+                nor its transform exists until the Frame has navigated.
+            -->
+            <Storyboard x:Key="PageEnter">
+                <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                 From="0"
+                                 To="1"
+                                 Duration="{StaticResource Motion.Duration.Slow}">
+                    <DoubleAnimation.EasingFunction>
+                        <CubicEase EasingMode="EaseOut" />
+                    </DoubleAnimation.EasingFunction>
+                </DoubleAnimation>
+                <DoubleAnimation Storyboard.TargetProperty="Y"
+                                 From="{StaticResource Motion.Translate.Page}"
+                                 To="0"
+                                 Duration="{StaticResource Motion.Duration.Slow}">
+                    <DoubleAnimation.EasingFunction>
+                        <CubicEase EasingMode="EaseOut" />
+                    </DoubleAnimation.EasingFunction>
+                </DoubleAnimation>
+            </Storyboard>
+        </Grid.Resources>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Step 10c. Elevated, same as the player bar, so the app is bracketed top and bottom.
+             The caption buttons are system-drawn and are coloured from MainWindow.xaml.cs. -->
+        <TitleBar x:Name="AppTitleBar"
+                  Grid.Row="0"
+                  Title="Taptic Music"
+                  Background="{ThemeResource Brush.Background.Elevated}">
+            <TitleBar.IconSource>
+                <ImageIconSource ImageSource="Assets/AppIcon.ico" />
+            </TitleBar.IconSource>
+        </TitleBar>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <controls:CustomSidebarRail Grid.Column="0"
+                                        SelectionRequested="SidebarRail_SelectionRequested" />
+
+            <Frame x:Name="RootFrame" Grid.Column="1" />
+
+            <!-- Queue rail. Shows the play queue in order; falls back to an empty state. -->
+            <Border Grid.Column="2"
+                    Width="{StaticResource Size.QueueRail.Width}"
+                    Background="{ThemeResource Brush.Background.Elevated}"
+                    BorderBrush="{ThemeResource Brush.Border.Default}"
+                    BorderThickness="{StaticResource BorderWidth.QueueRail.Left}">
+                <Grid>
+                    <ListView x:Name="QueueList"
+                              SelectionMode="Single"
+                              IsItemClickEnabled="True"
+                              ItemClick="QueueList_ItemClick"
+                              ItemContainerStyle="{StaticResource QueueRowItemStyle}"
+                              AutomationProperties.Name="Play queue" />
+
+                    <controls:EmptyStateView x:Name="QueueEmptyState"
+                                             Glyph="&#xE8FD;"
+                                             Title="Queue is empty"
+                                             Message="Tracks you play next show up here." />
+                </Grid>
+            </Border>
+        </Grid>
+
+        <InfoBar x:Name="ErrorBar"
+                 Grid.Row="2"
+                 Style="{StaticResource InfoBarErrorStyle}"
+                 Severity="Error"
+                 CloseButtonClick="ErrorBar_CloseButtonClick" />
+
+        <controls:PlayerBarView Grid.Row="3" />
+    </Grid>
+</Window>

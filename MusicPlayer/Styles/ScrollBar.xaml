@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--
+        ScrollBar is restyled by overriding WinUI's own brush keys, not by retemplating.
+        The default ScrollBar template is ~400 lines with conservative/expanded states; copying
+        it to change four colours would be a large diff with nothing gained.
+
+        The square thumb comes from ControlCornerRadius = 0 in Themes/Metrics.xaml, which squares
+        every WinUI default template at once.
+
+        These keys live in WinUI's ThemeDictionaries, so the overrides must be in theme
+        dictionaries too. A flat resource would not win the lookup.
+    -->
+
+    <ResourceDictionary.ThemeDictionaries>
+
+        <ResourceDictionary x:Key="Default">
+            <StaticResource x:Key="ScrollBarThumbFill" ResourceKey="Brush.Surface.Hover" />
+            <StaticResource x:Key="ScrollBarThumbFillPointerOver" ResourceKey="Brush.Text.Secondary" />
+            <StaticResource x:Key="ScrollBarThumbFillPressed" ResourceKey="Brush.Accent.Primary" />
+            <StaticResource x:Key="ScrollBarThumbFillDisabled" ResourceKey="Brush.Background.Surface" />
+
+            <StaticResource x:Key="ScrollBarTrackFill" ResourceKey="Brush.Background.Surface" />
+            <StaticResource x:Key="ScrollBarTrackFillPointerOver" ResourceKey="Brush.Background.Surface" />
+            <StaticResource x:Key="ScrollBarTrackFillDisabled" ResourceKey="Brush.Background.Surface" />
+
+            <StaticResource x:Key="ScrollBarTrackStroke" ResourceKey="Brush.Border.Default" />
+            <StaticResource x:Key="ScrollBarTrackStrokePointerOver" ResourceKey="Brush.Border.Default" />
+            <StaticResource x:Key="ScrollBarTrackStrokeDisabled" ResourceKey="Brush.Border.Default" />
+
+            <StaticResource x:Key="ScrollBarButtonBackground" ResourceKey="Brush.Background.Surface" />
+            <StaticResource x:Key="ScrollBarButtonBackgroundPointerOver" ResourceKey="Brush.Surface.Hover" />
+            <StaticResource x:Key="ScrollBarButtonBackgroundPressed" ResourceKey="Brush.Accent.PrimaryPressed" />
+            <StaticResource x:Key="ScrollBarButtonBackgroundDisabled" ResourceKey="Brush.Background.Surface" />
+
+            <StaticResource x:Key="ScrollBarButtonArrowForeground" ResourceKey="Brush.Text.Primary" />
+            <StaticResource x:Key="ScrollBarButtonArrowForegroundPointerOver" ResourceKey="Brush.Text.Primary" />
+            <StaticResource x:Key="ScrollBarButtonArrowForegroundPressed" ResourceKey="Brush.Text.OnAccent" />
+            <StaticResource x:Key="ScrollBarButtonArrowForegroundDisabled" ResourceKey="Brush.Text.Secondary" />
+        </ResourceDictionary>
+
+    </ResourceDictionary.ThemeDictionaries>
+</ResourceDictionary>

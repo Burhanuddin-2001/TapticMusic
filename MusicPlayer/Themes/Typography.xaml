@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Step 13. Bahnschrift is Microsoft's DIN 1451, preinstalled on every Windows 10/11 machine:
+         no font file, no NuGet, no MSIX growth, and the 5-package ceiling is untouched.
+
+         WEIGHT COMES FROM THE FAMILY NAME, NOT FROM FontWeight. Windows registers each Bahnschrift
+         weight as its OWN family — "Bahnschrift", "Bahnschrift SemiBold", "Bahnschrift Light",
+         "Bahnschrift SemiLight" (plus Condensed / SemiCondensed twins). Each family holds exactly
+         one weight, so FontWeight="Bold" on plain "Bahnschrift" finds no bold face and DirectWrite
+         silently renders Regular. That is exactly what happened on the first attempt: all seven
+         styles below looked identical. Verified against the installed font list, and there is no
+         "Bahnschrift Bold" family to reach for.
+
+         So the two keys carry the WEIGHT split, not a display/text split:
+           Font.Display = the heavy voice  -> Text.Display, Heading1, Heading2, Title, Micro
+           Font.Text    = the regular voice -> Text.Body, Caption
+         The FontWeight setters below are kept as a fallback for a future face that does expose
+         real weights inside one family. On Bahnschrift they are inert. -->
+    <FontFamily x:Key="Font.Display">Bahnschrift SemiBold Condensed</FontFamily>
+    <FontFamily x:Key="Font.Text">Bahnschrift</FontFamily>
+
+    <!-- WinUI-owned key, not overridden before Step 13. Without it MenuFlyoutItem, ContentDialog,
+         InfoBar, ListViewItem and the TitleBar title fall through to XamlAutoFontFamily and keep
+         rendering Segoe, so the app shows two typefaces at once. A flat entry beats WinUI's own
+         theme dictionaries on merge order alone, the same way ControlCornerRadius does in
+         Metrics.xaml. Declared after Font.Text because a StaticResource only resolves backwards.
+
+         NEVER add SymbolThemeFontFamily here. That is Segoe Fluent Icons and every FontIcon in the
+         app depends on it; the text family must not be able to reach it. -->
+    <FontFamily x:Key="ContentControlThemeFontFamily">Bahnschrift</FontFamily>
+
+
+    <!-- Bare sizes, Step 10c. A TextBlock should always take a Text.* style instead; these exist
+         for the controls that cannot. A Button, CheckBox, TextBox or ToolTip takes a raw FontSize
+         and cannot be handed a TextBlock Style, which is why those four carried literals until now.
+         Defined before the styles below because a StaticResource only resolves backwards. -->
+    <x:Double x:Key="FontSize.Body">13</x:Double>
+    <x:Double x:Key="FontSize.Caption">12</x:Double>
+
+    <!-- Step 13-D. The retemplated ContentDialog's Title is a ContentControl, not a TextBlock, so it
+         cannot take Text.Heading2. Text.Heading2 now reads this key too, so 18 lives in one place
+         rather than two. -->
+    <x:Double x:Key="FontSize.Heading2">18</x:Double>
+
+    <!-- Step 13. A dialog input is the one place in the app the user is actively TYPING into and
+         reading back a single short string, so 13 reads too small there. Only NamePrompt uses it;
+         a literal in that file would break the no-inline-values rule, so it lives here. -->
+    <x:Double x:Key="FontSize.Input">16</x:Double>
+
+    <Style x:Key="Text.Display" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Display}" />
+        <Setter Property="FontSize" Value="28" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Foreground" Value="{ThemeResource Brush.Text.Primary}" />
+    </Style>
+
+    <Style x:Key="Text.Heading1" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Display}" />
+        <Setter Property="FontSize" Value="22" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Foreground" Value="{ThemeResource Brush.Text.Primary}" />
+    </Style>
+
+    <Style x:Key="Text.Heading2" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Display}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSize.Heading2}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{ThemeResource Brush.Text.Primary}" />
+    </Style>
+
+    <Style x:Key="Text.Title" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Display}" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{ThemeResource Brush.Text.Primary}" />
+    </Style>
+
+    <Style x:Key="Text.Body" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Text}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSize.Body}" />
+        <Setter Property="FontWeight" Value="Normal" />
+        <Setter Property="Foreground" Value="{ThemeResource Brush.Text.Primary}" />
+    </Style>
+
+    <Style x:Key="Text.Caption" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Text}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSize.Caption}" />
+        <Setter Property="FontWeight" Value="Normal" />
+        <Setter Property="Foreground" Value="{ThemeResource Brush.Text.Secondary}" />
+    </Style>
+
+    <Style x:Key="Text.Micro" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Display}" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{ThemeResource Brush.Text.Primary}" />
+    </Style>
+
+</ResourceDictionary>

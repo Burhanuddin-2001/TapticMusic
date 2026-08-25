@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Taptic Music (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "Taptic Music (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Application
+    x:Class="MusicPlayer.App"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
+                <ResourceDictionary Source="ms-appx:///Themes/Colors.xaml" />
+                <ResourceDictionary Source="ms-appx:///Themes/Typography.xaml" />
+                <ResourceDictionary Source="ms-appx:///Themes/Spacing.xaml" />
+                <ResourceDictionary Source="ms-appx:///Themes/Metrics.xaml" />
+                <ResourceDictionary Source="ms-appx:///Themes/Motion.xaml" />
+                <ResourceDictionary Source="ms-appx:///Styles/Panel.xaml" />
+                <ResourceDictionary Source="ms-appx:///Styles/Button.xaml" />
+                <ResourceDictionary Source="ms-appx:///Styles/TextBox.xaml" />
+                <ResourceDictionary Source="ms-appx:///Styles/CheckBox.xaml" />
+                <ResourceDictionary Source="ms-appx:///Styles/Switch.xaml" />
+                <ResourceDictionary Source="ms-appx:///Styles/ListView.xaml" />
+                <!-- After ListView.xaml: TrackRowItemStyle is keyed, so it does not compete with the
+                     implicit ListViewItem style, but keeping it adjacent keeps the pair readable. -->
+                <ResourceDictionary Source="ms-appx:///Styles/TrackRow.xaml" />
+                <ResourceDictionary Source="ms-appx:///Styles/SidebarRail.xaml" />
+                <ResourceDictionary Source="ms-appx:///Styles/ContentDialog.xaml" />
+                <ResourceDictionary Source="ms-appx:///Styles/MenuFlyout.xaml" />
+                <ResourceDictionary Source="ms-appx:///Styles/ToolTip.xaml" />
+                <ResourceDictionary Source="ms-appx:///Styles/InfoBar.xaml" />
+                <ResourceDictionary Source="ms-appx:///Styles/Slider.xaml" />
+                <ResourceDictionary Source="ms-appx:///Styles/ScrollBar.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <!-- Other app resources here -->
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

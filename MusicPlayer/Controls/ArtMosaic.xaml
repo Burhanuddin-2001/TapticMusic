@@ -1,0 +1,53 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<UserControl
+    x:Class="MusicPlayer.Controls.ArtMosaic"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--
+        Step 14. Up to four album covers in one square. Used by the Playlists index tile and by the
+        Dashboard deal card, which is what earns it a control instead of duplicated template markup.
+
+        The Grid's own Background is Border.Default and the two spacings are BorderWidth.Standard,
+        so the seams BETWEEN covers are the same hard 2px black as every other edge in the app: a
+        cross on a four-up, one vertical rule on a two-up, and nothing at all on a one-up. No new
+        colour and no divider Rectangles.
+
+        Placeholder is a Border and not a bare FontIcon because it has to hide those black seams
+        when there is no art at all — an icon alone would leave a black cross behind it.
+
+        Layout comes from ApplyLayout() in code-behind rather than x:Load. x:Load needs a bool with
+        change notification and a UserControl has none, so four variants would mean four DPs and a
+        notification chain to keep them honest. One method is smaller and keeps the count-to-layout
+        rule in exactly one place. Safe to do imperatively: this is a UserControl, not a
+        ControlTemplate root, so it owns no VisualStateManager and nothing has to move with it.
+    -->
+    <Grid Background="{ThemeResource Brush.Border.Default}"
+          RowSpacing="{StaticResource BorderWidth.Standard}"
+          ColumnSpacing="{StaticResource BorderWidth.Standard}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- UniformToFill, because a cover is square but not every file's is. Row, Column and the
+             two spans are all reassigned by ApplyLayout; these are only the four-up defaults. -->
+        <Image x:Name="Cell0" Grid.Row="0" Grid.Column="0" Stretch="UniformToFill" />
+        <Image x:Name="Cell1" Grid.Row="0" Grid.Column="1" Stretch="UniformToFill" />
+        <Image x:Name="Cell2" Grid.Row="1" Grid.Column="0" Stretch="UniformToFill" />
+        <Image x:Name="Cell3" Grid.Row="1" Grid.Column="1" Stretch="UniformToFill" />
+
+        <Border x:Name="Placeholder"
+                Grid.RowSpan="2"
+                Grid.ColumnSpan="2"
+                Background="{ThemeResource Brush.Background.Elevated}">
+            <FontIcon Glyph="&#xE93C;"
+                      FontSize="{StaticResource Size.EmptyState.Icon}"
+                      Foreground="{ThemeResource Brush.Text.Secondary}" />
+        </Border>
+    </Grid>
+</UserControl>

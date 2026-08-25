@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--
+        Step 13 Part B removed InfoBarInformationalStyle, InfoBarSuccessStyle and
+        InfoBarWarningStyle. All three had zero call sites since the day they were written.
+        MainWindow's ErrorBar is the only InfoBar in the app.
+
+        Step 15 then removed the IMPLICIT Style TargetType="InfoBar" too. A locally-set Style
+        replaces the implicit one outright rather than merging with it, and the ErrorBar sets
+        InfoBarErrorStyle, so all five of those setters were unreachable. If a second InfoBar ever
+        appears WITHOUT an explicit style it will render as stock WinUI - add the implicit style
+        back at that point, do not leave it bare.
+
+        Brush.Status.Success and Brush.Status.Warning are now unreferenced. They are kept anyway:
+        they are part of the documented semantic palette, not accidental leftovers, and
+        they had no real consumer before this either — only the unused styles.
+
+        Foreground is Text.OnStatus, NOT Text.Primary. A status fill is a saturated signal colour in
+        both themes, so its label is always near-black. Text.Primary was a genuine contrast bug:
+        paper ink on Brush.Status.Error measures 2.78:1 against a required 4.5:1, and it shipped that
+        way. Near-black on the same fill is 6.14:1.
+    -->
+    <Style x:Key="InfoBarErrorStyle" TargetType="InfoBar">
+        <Setter Property="BorderBrush" Value="{ThemeResource Brush.Border.Default}" />
+        <Setter Property="BorderThickness" Value="{StaticResource BorderWidth.Standard.Thickness}" />
+        <Setter Property="CornerRadius" Value="{StaticResource Radius.Sharp}" />
+        <Setter Property="Foreground" Value="{ThemeResource Brush.Text.OnStatus}" />
+        <Setter Property="Background" Value="{ThemeResource Brush.Status.Error}" />
+    </Style>
+
+</ResourceDictionary>

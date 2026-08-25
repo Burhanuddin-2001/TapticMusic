@@ -1,0 +1,406 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:conv="using:MusicPlayer.Converters">
+
+    <conv:DurationToStringConverter x:Key="TrackRow.Duration" />
+    <conv:BoolToVisibilityConverter x:Key="TrackRow.BoolToVisibility" />
+
+    <!--
+        A sortable column header. Lives here rather than in Button.xaml because it only ever sits
+        above this row: the header and the row must share one set of column widths or they drift
+        apart, and keeping both in one file is what makes that obvious.
+
+        A Button and not a tapped TextBlock, so the header is reachable and activatable by keyboard
+        without any extra work. Flat and borderless: the table's only 2px lines are the row
+        separators (Gate 0) and the pink sort underline, which each header draws in its own content.
+    -->
+    <Style x:Key="TrackHeaderButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="{StaticResource Space.XS.Thickness}" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="VerticalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="FocusVisualMargin" Value="{StaticResource Focus.Visual.Margin}" />
+        <!-- Step 16. A mouse click must not park the keyboard. Trap: see TRAPS.md T-10. -->
+        <Setter Property="AllowFocusOnInteraction" Value="False" />
+        <Setter Property="UseSystemFocusVisuals" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid x:Name="Root" Background="{TemplateBinding Background}">
+                        <Grid.RenderTransform>
+                            <TranslateTransform x:Name="PressTransform" />
+                        </Grid.RenderTransform>
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <!-- Step 10c. Motion only, no shadow: this header is deliberately flat and borderless
+                                     (see the note above), so it has nothing to cast. -->
+                                <VisualState x:Name="Normal">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="PressTransform"
+                                                         Storyboard.TargetProperty="X"
+                                                         To="0"
+                                                         Duration="{StaticResource Motion.Duration.Fast}" />
+                                        <DoubleAnimation Storyboard.TargetName="PressTransform"
+                                                         Storyboard.TargetProperty="Y"
+                                                         To="0"
+                                                         Duration="{StaticResource Motion.Duration.Fast}" />
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState x:Name="PointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="Root.Background" Value="{ThemeResource Brush.Surface.Hover}" />
+                                    </VisualState.Setters>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="PressTransform"
+                                                         Storyboard.TargetProperty="X"
+                                                         To="0"
+                                                         Duration="{StaticResource Motion.Duration.Fast}" />
+                                        <DoubleAnimation Storyboard.TargetName="PressTransform"
+                                                         Storyboard.TargetProperty="Y"
+                                                         To="0"
+                                                         Duration="{StaticResource Motion.Duration.Fast}" />
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="PressTransform"
+                                                         Storyboard.TargetProperty="X"
+                                                         To="{StaticResource Shadow.Offset}"
+                                                         Duration="{StaticResource Motion.Duration.Fast}" />
+                                        <DoubleAnimation Storyboard.TargetName="PressTransform"
+                                                         Storyboard.TargetProperty="Y"
+                                                         To="{StaticResource Shadow.Offset}"
+                                                         Duration="{StaticResource Motion.Duration.Fast}" />
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState x:Name="Disabled">
+                                    <VisualState.Setters>
+                                        <Setter Target="Root.Opacity" Value="0.4" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                        <ContentPresenter Content="{TemplateBinding Content}"
+                                          Padding="{TemplateBinding Padding}"
+                                          HorizontalContentAlignment="Stretch"
+                                          VerticalContentAlignment="Stretch" />
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--
+        THE TRACK ROW. Keyed, applied as ItemContainerStyle on a track ListView.
+
+        Keyed and not implicit: Styles/ListView.xaml keeps the generic ListViewItem for every other
+        list in the app, and this template binds Content.* to Track, so it must never capture a list
+        of something else.
+
+        WHY THE ROW IS A ListViewItem TEMPLATE AND NOT A UserControl. This is the fix for O-7.
+        All 7 Text.* styles hard-set their own Foreground, and a Style setter cannot be beaten by an
+        inherited value — which is why setting ContentPresenter.Foreground on Selected never worked
+        and a selected row shipped Text.Primary on Accent.Primary at 3.0:1. A VisualState Setter DOES
+        beat a Style setter, but only for an element it can name. So the labels live inside this
+        template as named parts, and Selected retargets each one directly.
+
+        The state names below are the ones already proven on this machine by Styles/ListView.xaml.
+        WinUI's own DefaultListViewItemStyle has no VisualStateManager at all — it renders selection
+        natively through ListViewItemPresenter and ~50 brush properties — so generic.xaml is NOT the
+        reference for these names. Do not "correct" them from it.
+
+        O-9's rule holds here by construction: one state group, so no property can be written twice.
+    -->
+    <Style x:Key="TrackRowItemStyle" TargetType="ListViewItem">
+        <Setter Property="MinHeight" Value="{StaticResource Size.TrackRow.MinHeight}" />
+        <Setter Property="Padding" Value="0" />
+        <!-- Bottom-only gap so the shadow has somewhere to fall. Step 10c. -->
+        <Setter Property="Margin" Value="{StaticResource Size.TrackRow.Gap}" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="FocusVisualMargin" Value="{StaticResource Focus.Visual.Margin}" />
+        <!-- Step 16. A mouse click must not park the keyboard. Trap: see TRAPS.md T-10. -->
+        <Setter Property="AllowFocusOnInteraction" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListViewItem">
+                    <!--
+                        Step 10c. The Grid is now the template ROOT, so the state groups moved onto it.
+                        VisualStateManager reads its groups off the root only — leaving them on Root
+                        compiles fine and silently kills every state. That cost Step 06 a round on the
+                        switch and Step 08 a gate on the checkbox.
+                    
+                        The shadow is hidden at rest and only appears under hover, press and selection.
+                        Rows are contiguous, so a permanent slab under all of them reads as stripes
+                        rather than depth.
+                    -->
+                    <Grid x:Name="Layout">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="PressTransform"
+                                                         Storyboard.TargetProperty="X"
+                                                         To="0"
+                                                         Duration="{StaticResource Motion.Duration.Fast}" />
+                                        <DoubleAnimation Storyboard.TargetName="PressTransform"
+                                                         Storyboard.TargetProperty="Y"
+                                                         To="0"
+                                                         Duration="{StaticResource Motion.Duration.Fast}" />
+                                    </Storyboard>
+                                </VisualState>
+
+                                <VisualState x:Name="PointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="Root.Background" Value="{ThemeResource Brush.Surface.Hover}" />
+                                        <Setter Target="Ordinal.Visibility" Value="Collapsed" />
+                                        <Setter Target="PlayGlyph.Visibility" Value="Visible" />
+                                        <Setter Target="Shadow.Opacity" Value="1" />
+                                    </VisualState.Setters>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="PressTransform"
+                                                         Storyboard.TargetProperty="X"
+                                                         To="0"
+                                                         Duration="{StaticResource Motion.Duration.Fast}" />
+                                        <DoubleAnimation Storyboard.TargetName="PressTransform"
+                                                         Storyboard.TargetProperty="Y"
+                                                         To="0"
+                                                         Duration="{StaticResource Motion.Duration.Fast}" />
+                                    </Storyboard>
+                                </VisualState>
+
+                                <VisualState x:Name="Pressed">
+                                    <VisualState.Setters>
+                                        <Setter Target="Ordinal.Visibility" Value="Collapsed" />
+                                        <Setter Target="PlayGlyph.Visibility" Value="Visible" />
+                                        <Setter Target="Shadow.Opacity" Value="1" />
+                                    </VisualState.Setters>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="PressTransform"
+                                                         Storyboard.TargetProperty="X"
+                                                         To="{StaticResource Shadow.Offset}"
+                                                         Duration="{StaticResource Motion.Duration.Fast}" />
+                                        <DoubleAnimation Storyboard.TargetName="PressTransform"
+                                                         Storyboard.TargetProperty="Y"
+                                                         To="{StaticResource Shadow.Offset}"
+                                                         Duration="{StaticResource Motion.Duration.Fast}" />
+                                    </Storyboard>
+                                </VisualState>
+
+                                <!-- Every label is retargeted by name. This is the whole of O-7, and
+                                     since Step 17 that includes the three labels the unreadable row
+                                     swaps in: it selects like any other row, which the comment
+                                     further down this file used to deny. -->
+                                <VisualState x:Name="Selected">
+                                    <VisualState.Setters>
+                                        <Setter Target="Root.Background" Value="{ThemeResource Brush.Accent.Primary}" />
+                                        <Setter Target="Ordinal.Foreground" Value="{ThemeResource Brush.Text.OnAccent}" />
+                                        <Setter Target="PlayGlyph.Foreground" Value="{ThemeResource Brush.Text.OnAccent}" />
+                                        <Setter Target="TitleText.Foreground" Value="{ThemeResource Brush.Text.OnAccent}" />
+                                        <Setter Target="ArtistText.Foreground" Value="{ThemeResource Brush.Text.OnAccent}" />
+                                        <Setter Target="AlbumText.Foreground" Value="{ThemeResource Brush.Text.OnAccent}" />
+                                        <Setter Target="TimeText.Foreground" Value="{ThemeResource Brush.Text.OnAccent}" />
+                                        <Setter Target="UnreadableTitle.Foreground" Value="{ThemeResource Brush.Text.OnAccent}" />
+                                        <Setter Target="UnreadableGlyph.Foreground" Value="{ThemeResource Brush.Text.OnAccent}" />
+                                        <Setter Target="UnreadableText.Foreground" Value="{ThemeResource Brush.Text.OnAccent}" />
+                                        <Setter Target="Shadow.Opacity" Value="1" />
+                                    </VisualState.Setters>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="PressTransform"
+                                                         Storyboard.TargetProperty="X"
+                                                         To="0"
+                                                         Duration="{StaticResource Motion.Duration.Fast}" />
+                                        <DoubleAnimation Storyboard.TargetName="PressTransform"
+                                                         Storyboard.TargetProperty="Y"
+                                                         To="0"
+                                                         Duration="{StaticResource Motion.Duration.Fast}" />
+                                    </Storyboard>
+                                </VisualState>
+
+                                <VisualState x:Name="PointerOverSelected">
+                                    <VisualState.Setters>
+                                        <Setter Target="Root.Background" Value="{ThemeResource Brush.Accent.Primary}" />
+                                        <Setter Target="Ordinal.Visibility" Value="Collapsed" />
+                                        <Setter Target="PlayGlyph.Visibility" Value="Visible" />
+                                        <Setter Target="PlayGlyph.Foreground" Value="{ThemeResource Brush.Text.OnAccent}" />
+                                        <Setter Target="TitleText.Foreground" Value="{ThemeResource Brush.Text.OnAccent}" />
+                                        <Setter Target="ArtistText.Foreground" Value="{ThemeResource Brush.Text.OnAccent}" />
+                                        <Setter Target="AlbumText.Foreground" Value="{ThemeResource Brush.Text.OnAccent}" />
+                                        <Setter Target="TimeText.Foreground" Value="{ThemeResource Brush.Text.OnAccent}" />
+                                        <Setter Target="UnreadableTitle.Foreground" Value="{ThemeResource Brush.Text.OnAccent}" />
+                                        <Setter Target="UnreadableGlyph.Foreground" Value="{ThemeResource Brush.Text.OnAccent}" />
+                                        <Setter Target="UnreadableText.Foreground" Value="{ThemeResource Brush.Text.OnAccent}" />
+                                        <Setter Target="Shadow.Opacity" Value="1" />
+                                    </VisualState.Setters>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="PressTransform"
+                                                         Storyboard.TargetProperty="X"
+                                                         To="0"
+                                                         Duration="{StaticResource Motion.Duration.Fast}" />
+                                        <DoubleAnimation Storyboard.TargetName="PressTransform"
+                                                         Storyboard.TargetProperty="Y"
+                                                         To="0"
+                                                         Duration="{StaticResource Motion.Duration.Fast}" />
+                                    </Storyboard>
+                                </VisualState>
+
+                                <VisualState x:Name="Disabled">
+                                    <VisualState.Setters>
+                                        <Setter Target="Layout.Opacity" Value="0.4" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+
+                        <Border x:Name="Shadow"
+                                Background="{ThemeResource Brush.Shadow}"
+                                Opacity="0"
+                                Margin="{StaticResource Shadow.Offset.Thickness}" />
+
+                        <Border x:Name="Root"
+                                MinHeight="{TemplateBinding MinHeight}"
+                                Background="{ThemeResource Brush.Background.Surface}"
+                                BorderBrush="{ThemeResource Brush.Border.Default}"
+                                BorderThickness="{StaticResource BorderWidth.TrackRow.Bottom}"
+                                CornerRadius="{StaticResource Radius.Sharp}">
+    
+                            <!-- UIElement.Translation throws from a VisualState Setter. RenderTransform
+                                 is the approved fallback. design-plan 3.4, and it cost Step 05 three
+                                 rounds. -->
+                            <Border.RenderTransform>
+                                <TranslateTransform x:Name="PressTransform" />
+                            </Border.RenderTransform>
+    
+                            <!-- Column widths chosen at Gate 0, 2026-08-18: Title : Artist : Album is
+                                 2.75 : 1 : 1. Proportions, not pixels, so no token applies. -->
+                            <Grid ColumnSpacing="{StaticResource Space.S}"
+                                  Padding="{StaticResource Space.S.Thickness}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="{StaticResource Size.TrackRow.NumberCell}" />
+                                    <ColumnDefinition Width="2.75*" />
+                                    <ColumnDefinition Width="1*" />
+                                    <ColumnDefinition Width="1*" />
+                                    <ColumnDefinition Width="{StaticResource Size.TrackRow.TimeCell}" />
+                                </Grid.ColumnDefinitions>
+    
+                                <!-- The number cell. Four mutually exclusive contents, one fixed box, so
+                                     the row never re-lays-out between them. Level bars (design-plan 3.2
+                                     item 4) are Step 10c and get the same box. -->
+                                <Grid Grid.Column="0" VerticalAlignment="Stretch">
+                                    <TextBlock x:Name="Ordinal"
+                                               Style="{StaticResource Text.Caption}"
+                                               Typography.NumeralAlignment="Tabular"
+                                               Text="{Binding Content.Ordinal, RelativeSource={RelativeSource TemplatedParent}}"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               Visibility="{Binding Content.Unreadable, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource TrackRow.BoolToVisibility}, ConverterParameter=Invert}" />
+    
+                                    <FontIcon x:Name="PlayGlyph"
+                                              Glyph="&#xE768;"
+                                              FontSize="{StaticResource Size.Glyph.Small}"
+                                              Foreground="{ThemeResource Brush.Accent.OnCanvas}"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              Visibility="Collapsed" />
+    
+                                    <!-- Hazard stripes: an unavailable thing, never decoration.
+                                         design-plan 4.4 stripes the NUMBER CELL ONLY, because striping
+                                         the whole row buries the text you need to fix the problem.
+    
+                                         Vector Path, not a tile: WinUI 3 has no TileMode, Win2D is
+                                         banned, and every kind of gradient brush is banned outright,
+                                         including as a shortcut. Stretch UniformToFill keeps the bars at 45 degrees and
+                                         clips the overflow, so this needs no literal Clip rectangle and
+                                         survives text scaling. The Data coordinates describe a shape,
+                                         not pixels. -->
+                                    <Grid Background="{ThemeResource Brush.Status.Error}"
+                                          Visibility="{Binding Content.Unreadable, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource TrackRow.BoolToVisibility}}">
+                                        <Path Fill="{ThemeResource Brush.Border.Default}"
+                                              Stretch="UniformToFill"
+                                              Data="M 0,16 L 16,0 L 24,0 L 0,24 Z
+                                                    M 0,48 L 32,16 L 40,16 L 0,56 Z
+                                                    M 16,64 L 48,32 L 56,32 L 24,64 Z
+                                                    M 48,64 L 64,48 L 64,56 L 56,64 Z" />
+                                    </Grid>
+                                </Grid>
+    
+                                <!-- Two titles, one cell. design-plan 4.4 wants the unreadable one
+                                     Text.Secondary with a strikethrough, and TextDecorations cannot be
+                                     driven from a bool without a second converter, so a sibling is cheaper.
+                                     It IS retargeted, though: Step 17 found that an unreadable row
+                                     selects like any other, so O-7 applies here too. -->
+                                <Grid Grid.Column="1">
+                                    <TextBlock x:Name="TitleText"
+                                               Style="{StaticResource Text.Title}"
+                                               Text="{Binding Content.Title, RelativeSource={RelativeSource TemplatedParent}}"
+                                               ToolTipService.ToolTip="{Binding Content.Title, RelativeSource={RelativeSource TemplatedParent}}"
+                                               TextTrimming="CharacterEllipsis"
+                                               VerticalAlignment="Center"
+                                               Visibility="{Binding Content.Unreadable, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource TrackRow.BoolToVisibility}, ConverterParameter=Invert}" />
+    
+                                    <TextBlock x:Name="UnreadableTitle"
+                                               Style="{StaticResource Text.Title}"
+                                               Foreground="{ThemeResource Brush.Text.Secondary}"
+                                               TextDecorations="Strikethrough"
+                                               Text="{Binding Content.Title, RelativeSource={RelativeSource TemplatedParent}}"
+                                               ToolTipService.ToolTip="{Binding Content.Title, RelativeSource={RelativeSource TemplatedParent}}"
+                                               TextTrimming="CharacterEllipsis"
+                                               VerticalAlignment="Center"
+                                               Visibility="{Binding Content.Unreadable, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource TrackRow.BoolToVisibility}}" />
+                                </Grid>
+    
+                                <!-- Artist and the error caption share the cell: an unreadable file has
+                                     no artist worth showing, and design-plan 4.4 requires the meaning to
+                                     be carried three ways — pattern, glyph, and label. -->
+                                <Grid Grid.Column="2">
+                                    <TextBlock x:Name="ArtistText"
+                                               Style="{StaticResource Text.Caption}"
+                                               Text="{Binding Content.Artist, RelativeSource={RelativeSource TemplatedParent}}"
+                                               ToolTipService.ToolTip="{Binding Content.Artist, RelativeSource={RelativeSource TemplatedParent}}"
+                                               TextTrimming="CharacterEllipsis"
+                                               VerticalAlignment="Center"
+                                               Visibility="{Binding Content.Unreadable, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource TrackRow.BoolToVisibility}, ConverterParameter=Invert}" />
+    
+                                    <StackPanel Orientation="Horizontal"
+                                                Spacing="{StaticResource Space.XS}"
+                                                VerticalAlignment="Center"
+                                                Visibility="{Binding Content.Unreadable, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource TrackRow.BoolToVisibility}}">
+                                        <FontIcon x:Name="UnreadableGlyph"
+                                                  Glyph="&#xE7BA;"
+                                                  FontSize="{StaticResource Size.Glyph.Small}"
+                                                  Foreground="{ThemeResource Brush.Status.Error}" />
+                                        <TextBlock x:Name="UnreadableText"
+                                                   Style="{StaticResource Text.Caption}"
+                                                   Foreground="{ThemeResource Brush.Status.Error}"
+                                                   Text="File missing or unreadable"
+                                                   TextTrimming="CharacterEllipsis" />
+                                    </StackPanel>
+                                </Grid>
+    
+                                <TextBlock x:Name="AlbumText"
+                                           Grid.Column="3"
+                                           Style="{StaticResource Text.Caption}"
+                                           Text="{Binding Content.Album, RelativeSource={RelativeSource TemplatedParent}}"
+                                           ToolTipService.ToolTip="{Binding Content.Album, RelativeSource={RelativeSource TemplatedParent}}"
+                                           TextTrimming="CharacterEllipsis"
+                                           VerticalAlignment="Center" />
+    
+                                <TextBlock x:Name="TimeText"
+                                           Grid.Column="4"
+                                           Style="{StaticResource Text.Caption}"
+                                           Typography.NumeralAlignment="Tabular"
+                                           Text="{Binding Content.DurationMs, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource TrackRow.Duration}}"
+                                           HorizontalAlignment="Right"
+                                           VerticalAlignment="Center" />
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

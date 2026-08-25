@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<UserControl
+    x:Class="MusicPlayer.Controls.PlayerBarView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:conv="using:MusicPlayer.Converters">
+
+    <UserControl.Resources>
+        <conv:DurationToStringConverter x:Key="DurationToString" />
+        <conv:BoolToPlayPauseGlyphConverter x:Key="PlayPauseGlyph" />
+    </UserControl.Resources>
+
+    <!--
+        MinHeight, not Height: this bar holds text and must grow under OS text scaling.
+        design-plan section 7.1. The 3px top border is the only 3px border in the app.
+    -->
+    <Border MinHeight="{StaticResource Size.PlayerBar.Height}"
+            Background="{ThemeResource Brush.Background.Elevated}"
+            BorderBrush="{ThemeResource Brush.Border.Default}"
+            BorderThickness="{StaticResource BorderWidth.PlayerBar.Top}"
+            Padding="{StaticResource Space.L.Thickness}">
+
+        <Grid ColumnSpacing="{StaticResource Space.XL}">
+            <!--
+                Equal outer columns are what puts the seek bar at the true midpoint of the bar.
+                Unequal ones (the old 2* / 3* / Auto) shifted it right by ~125px at 1200px wide.
+
+                Proportional, not Auto. A fixed-width text block trims the track name to an
+                ellipsis as soon as OS text scaling grows the font. design-plan section 7.1.
+            -->
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Now playing -->
+            <Grid Grid.Column="0"
+                  ColumnSpacing="{StaticResource Space.M}"
+                  VerticalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0"
+                        Width="{StaticResource Size.PlayerBar.ArtThumb}"
+                        Height="{StaticResource Size.PlayerBar.ArtThumb}"
+                        Background="{ThemeResource Brush.Background.Surface}"
+                        BorderBrush="{ThemeResource Brush.Border.Default}"
+                        BorderThickness="{StaticResource BorderWidth.Standard.Thickness}"
+                        CornerRadius="{StaticResource Radius.Sharp}">
+                    <!--
+                        Step 12. A Border takes one child, so the cover and its fallback need this
+                        Grid between them. Safe to wrap here: this Border is not a template root and
+                        carries no VisualStateManager, so nothing has to move with it.
+
+                        Two x:Load bools rather than one plus an inverting converter — x:Load takes
+                        a plain bool and cannot invert.
+
+                        UniformToFill, because a cover is square but not every file's is.
+                    -->
+                    <Grid>
+                        <Image x:Name="ArtImage"
+                               x:Load="{x:Bind ViewModel.HasArt, Mode=OneWay}"
+                               Source="{x:Bind ViewModel.ArtSource, Mode=OneWay}"
+                               Stretch="UniformToFill" />
+
+                        <FontIcon x:Name="ArtPlaceholder"
+                                  x:Load="{x:Bind ViewModel.HasNoArt, Mode=OneWay}"
+                                  Glyph="&#xE93C;"
+                                  FontSize="{StaticResource Size.Glyph.Large}"
+                                  Foreground="{ThemeResource Brush.Text.Secondary}" />
+                    </Grid>
+                </Border>
+
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock Style="{StaticResource Text.Title}"
+                               Text="{x:Bind ViewModel.TrackTitle, Mode=OneWay}"
+                               TextTrimming="CharacterEllipsis"
+                               ToolTipService.ToolTip="{x:Bind ViewModel.TrackTitle, Mode=OneWay}" />
+                    <TextBlock Style="{StaticResource Text.Caption}"
+                               Text="{x:Bind ViewModel.TrackArtist, Mode=OneWay}"
+                               TextTrimming="CharacterEllipsis"
+                               ToolTipService.ToolTip="{x:Bind ViewModel.TrackArtist, Mode=OneWay}" />
+                </StackPanel>
+            </Grid>
+
+            <!-- Transport + seek -->
+            <StackPanel Grid.Column="1"
+                        Spacing="{StaticResource Space.S}"
+                        VerticalAlignment="Center">
+
+                <StackPanel Orientation="Horizontal"
+                            Spacing="{StaticResource Space.S}"
+                            HorizontalAlignment="Center">
+                    <Button Style="{StaticResource IconButtonStyle}"
+                            Click="Shuffle_Click"
+                            AutomationProperties.Name="Shuffle">
+                        <FontIcon Glyph="&#xE8B1;"
+                                  FontSize="{StaticResource Size.Glyph.Small}"
+                                  Opacity="{x:Bind ViewModel.ShuffleOpacity, Mode=OneWay}" />
+                    </Button>
+                    <Button Style="{StaticResource IconButtonStyle}"
+                            Click="Previous_Click"
+                            AutomationProperties.Name="Previous track">
+                        <FontIcon Glyph="&#xE892;" FontSize="{StaticResource Size.Glyph.Small}" />
+                    </Button>
+                    <Button Style="{StaticResource IconButtonStyle}"
+                            Click="PlayPause_Click"
+                            AutomationProperties.Name="{x:Bind ViewModel.PlayPauseLabel, Mode=OneWay}">
+                        <FontIcon Glyph="{x:Bind ViewModel.IsPlaying, Mode=OneWay, Converter={StaticResource PlayPauseGlyph}}"
+                                  FontSize="{StaticResource Size.Glyph.Small}" />
+                    </Button>
+                    <Button Style="{StaticResource IconButtonStyle}"
+                            Click="Next_Click"
+                            AutomationProperties.Name="Next track">
+                        <FontIcon Glyph="&#xE893;" FontSize="{StaticResource Size.Glyph.Small}" />
+                    </Button>
+                    <Button Style="{StaticResource IconButtonStyle}"
+                            Click="Repeat_Click"
+                            AutomationProperties.Name="Repeat">
+                        <FontIcon Glyph="{x:Bind ViewModel.RepeatGlyph, Mode=OneWay}"
+                                  FontSize="{StaticResource Size.Glyph.Small}"
+                                  Opacity="{x:Bind ViewModel.RepeatOpacity, Mode=OneWay}" />
+                    </Button>
+                </StackPanel>
+
+                <Grid ColumnSpacing="{StaticResource Space.M}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Tabular figures are load-bearing here, not polish: this sits in an Auto
+                         column and the 250ms poll rewrites it ~4x a second, so proportional digits
+                         re-measure the column and the seek bar twitches on every tick. -->
+                    <TextBlock Grid.Column="0"
+                               Style="{StaticResource Text.Caption}"
+                               Typography.NumeralAlignment="Tabular"
+                               VerticalAlignment="Center"
+                               Text="{x:Bind ViewModel.PositionMs, Mode=OneWay, Converter={StaticResource DurationToString}}" />
+
+                    <Slider Grid.Column="1"
+                            x:Name="SeekSlider"
+                            Style="{StaticResource SeekBarSliderStyle}"
+                            Value="{x:Bind ViewModel.PositionPercent, Mode=OneWay}"
+                            VerticalAlignment="Center" />
+
+                    <TextBlock Grid.Column="2"
+                               Style="{StaticResource Text.Caption}"
+                               Typography.NumeralAlignment="Tabular"
+                               VerticalAlignment="Center"
+                               Text="{x:Bind ViewModel.DurationMs, Mode=OneWay, Converter={StaticResource DurationToString}}" />
+                </Grid>
+            </StackPanel>
+
+            <!-- Volume -->
+            <StackPanel Grid.Column="2"
+                        Orientation="Horizontal"
+                        Spacing="{StaticResource Space.S}"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center">
+                <Button Style="{StaticResource IconButtonStyle}"
+                        Click="Mute_Click"
+                        AutomationProperties.Name="Mute">
+                    <FontIcon Glyph="{x:Bind ViewModel.MuteGlyph, Mode=OneWay}"
+                              FontSize="{StaticResource Size.Glyph.Small}" />
+                </Button>
+                <Slider Width="{StaticResource Size.VolumeBar.Width}"
+                        Value="{x:Bind ViewModel.Volume, Mode=OneWay}"
+                        ValueChanged="Volume_ValueChanged"
+                        VerticalAlignment="Center"
+                        AutomationProperties.Name="Volume" />
+            </StackPanel>
+        </Grid>
+    </Border>
+</UserControl>
