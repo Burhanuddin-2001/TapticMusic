@@ -13,7 +13,7 @@ on your PC. No streaming. No account. No internet needed.
 
 ## Download and install
 
-1. Go to the [Releases page](Yet to update). Get the newest `.zip` file.
+1. Go to the [Releases page](https://github.com/Burhanuddin-2001/TapticMusic/releases). Get the newest `.zip` file.
 2. Unzip it. You get a folder with a few files inside.
 3. Find the file named `Install.ps1`. Right-click it. Pick **Run with PowerShell**.
 4. Windows asks for administrator permission. Click **Yes**.
