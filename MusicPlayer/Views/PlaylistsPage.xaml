@@ -28,7 +28,7 @@
               x:Load="{x:Bind ViewModel.ShowIndexView, Mode=OneWay}"
               RowSpacing="{StaticResource Space.M}">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" MinHeight="{StaticResource Size.PageHeader.MinHeight}" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
@@ -38,18 +38,24 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <!-- Text.Display, not Heading1, to sit level with the Library page. design-plan 5.1. -->
+                <!-- Text.Heading1, the same as every other tab's title. v1.1. Title, pill and button all
+                     centre in the row. A top-aligned title left the pill sitting below it. Tight,
+                     the slimmer button padding and the overhang are explained at
+                     Size.PageHeader.MinHeight. -->
                 <StackPanel Grid.Column="0"
                             Orientation="Horizontal"
                             Spacing="{StaticResource Space.M}"
                             HorizontalAlignment="Left">
-                    <TextBlock Style="{StaticResource Text.Display}" Text="Playlists" />
+                    <TextBlock Style="{StaticResource Text.Heading1}" Text="Playlists" TextLineBounds="Tight" VerticalAlignment="Center" />
                     <controls:BadgePill VerticalAlignment="Center"
+                                        Margin="{StaticResource Space.PageHeader.Overhang}"
                                         Text="{x:Bind ViewModel.PlaylistCount, Mode=OneWay}" />
                 </StackPanel>
 
                 <Button Grid.Column="1"
                         Style="{StaticResource PillAccentButtonStyle}"
+                        Padding="{StaticResource Space.PageHeader.Button.Padding}"
+                        Margin="{StaticResource Space.PageHeader.Overhang}"
                         Content="New playlist"
                         Click="NewPlaylist_Click" />
             </Grid>
@@ -172,8 +178,10 @@
                             Orientation="Horizontal"
                             Spacing="{StaticResource Space.M}"
                             HorizontalAlignment="Left">
-                    <TextBlock Style="{StaticResource Text.Display}"
+                    <TextBlock Style="{StaticResource Text.Heading1}"
                                Text="{x:Bind ViewModel.Selected.Name, Mode=OneWay}"
+                               TextLineBounds="Tight"
+                               VerticalAlignment="Center"
                                TextTrimming="CharacterEllipsis"
                                ToolTipService.ToolTip="{x:Bind ViewModel.Selected.Name, Mode=OneWay}" />
                     <controls:BadgePill VerticalAlignment="Center"

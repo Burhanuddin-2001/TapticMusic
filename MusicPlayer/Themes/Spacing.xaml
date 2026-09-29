@@ -20,10 +20,25 @@
     <!-- Named layout roles from design-plan section 5. -->
     <Thickness x:Key="Space.Page.Padding">24</Thickness>
 
+    <!-- v1.1. Right only. 8 of gap plus room for the close button's 2px shadow, so the slab never
+         touches the window edge. -->
+    <Thickness x:Key="Space.TitleBar.Caption.Margin">0,0,10,0</Thickness>
+
     <!-- Badge pill, Step 12. Horizontal 16, vertical 8, deliberately not uniform: a 24px round end
          eats the label's clearance, so the sides need more. Vertical stays 8 so the content still
          measures 35 and Size.ControlHeight is what actually sets the height. A uniform 16 would
          measure 51, overriding the MinHeight and knocking the badge off the 8px grid. -->
     <Thickness x:Key="Space.Badge.Padding">16,8,16,8</Thickness>
+
+    <!-- v1.1. A pill button that shares a tab's title row. Vertical 8, not Space.L's 16: with 16 the
+         button reached 78 at 250%, more than the overhang below can absorb, so it stretched the row
+         and the Playlists title sat lower than every other tab's. -->
+    <Thickness x:Key="Space.PageHeader.Button.Padding">16,8,16,8</Thickness>
+
+    <!-- v1.1. Lets a pill in a tab's title row hang 8 above and below the row instead of making it
+         taller. At 250% the badge is 56 and the New playlist button 62, against a 48 row: both fit
+         inside 48 + 16. The overhang lands in the 24 of page padding above and the 12 or 16 of
+         row gap below, so it never touches anything. See Size.PageHeader.MinHeight. -->
+    <Thickness x:Key="Space.PageHeader.Overhang">0,-8,0,-8</Thickness>
 
 </ResourceDictionary>

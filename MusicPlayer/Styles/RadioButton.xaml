@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:services="using:MusicPlayer.Services">
+
+    <!-- v1.1. The only change to WinUI's RadioButton: its label joins the app-wide text size. WinUI
+         sets FontSize from its own ControlContentThemeFontSize, so without this the two radio lists
+         in Settings were the one block of app text the dial could not reach. Same 14, now scaled. -->
+    <Style TargetType="RadioButton" BasedOn="{StaticResource DefaultRadioButtonStyle}">
+        <Setter Property="services:TextScale.BaseSize" Value="{StaticResource ControlContentThemeFontSize}" />
+    </Style>
+
+</ResourceDictionary>

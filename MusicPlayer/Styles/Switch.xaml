@@ -196,9 +196,15 @@
                                 <Rectangle x:Name="Fill"
                                            Fill="{ThemeResource Brush.Accent.Primary}"
                                            Visibility="Collapsed" />
+                                <!-- v1.1. Text.Micro's face at a FIXED size, not the style itself.
+                                     The track, thumb and travel are fixed geometry, so a label that
+                                     followed the text-size dial ran into the thumb at 250%. The
+                                     label is part of the control, like its glyph, not reading text. -->
                                 <TextBlock x:Name="Label"
                                            Text="OFF"
-                                           Style="{StaticResource Text.Micro}"
+                                           FontFamily="{StaticResource Font.Display}"
+                                           FontSize="{StaticResource FontSize.Micro}"
+                                           FontWeight="SemiBold"
                                            Foreground="{ThemeResource Brush.Text.Secondary}"
                                            HorizontalAlignment="Center"
                                            VerticalAlignment="Center" />

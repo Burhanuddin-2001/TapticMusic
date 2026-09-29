@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
+using MusicPlayer.Services;
 
 namespace MusicPlayer.Views;
 
@@ -25,9 +26,6 @@ internal static class NamePrompt
         TextBox input = new()
         {
             Style = (Style)Application.Current.Resources["PillTextBoxStyle"],
-            // FontSize.Body (13) is right for a row of metadata and too small for the one field the
-            // user is actively typing into. Step 13.
-            FontSize = (double)Application.Current.Resources["FontSize.Input"],
             PlaceholderText = "Name it something you will recognise",
             Text = initial,
         };
@@ -35,6 +33,11 @@ internal static class NamePrompt
         // An attached property cannot go in an object initializer - that is CS0103 plus CS0747, and
         // it takes the XAML compiler down with it. Step 11.
         AutomationProperties.SetName(input, title);
+
+        // FontSize.Body (13) is right for a row of metadata and too small for the one field the
+        // user is actively typing into. Step 13. BaseSize and not FontSize since v1.1: the style's own
+        // BaseSize would overwrite a plain FontSize the moment the box entered the tree.
+        TextScale.SetBaseSize(input, (double)Application.Current.Resources["FontSize.Input"]);
 
         ContentDialog dialog = new()
         {

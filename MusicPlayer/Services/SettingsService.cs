@@ -108,6 +108,27 @@ public sealed class SettingsService
     }
 
     /// <summary>
+    /// v1.1. The app-wide text size as a whole percentage, 150 by default. Rounded here rather than by
+    /// the caller, so a mid-drag fraction can never reach the file. Applied by TextScale.
+    /// </summary>
+    public double TextScalePercent
+    {
+        get => _data.TextScalePercent;
+        set
+        {
+            value = Math.Round(value);
+
+            if (_data.TextScalePercent == value)
+            {
+                return;
+            }
+
+            _data.TextScalePercent = value;
+            _saveTimer.Start();
+        }
+    }
+
+    /// <summary>
     /// The saved repeat mode, seeded into QueueService at startup and written back when the user
     /// cycles it. The equality guard is what stops a no-op assignment restarting the 500ms save
     /// timer. Stored as the enum's int, so RepeatMode's member order can never be changed.
@@ -243,5 +264,9 @@ public sealed class SettingsService
         public AppTheme Theme { get; set; }
 
         public AccentSwatch Accent { get; set; }
+
+        // An older settings.json has no key, and a missing key keeps this initializer, so v1.0 users
+        // open at the new default too.
+        public double TextScalePercent { get; set; } = 150;
     }
 }

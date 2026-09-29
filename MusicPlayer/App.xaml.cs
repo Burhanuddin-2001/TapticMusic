@@ -101,6 +101,10 @@ public partial class App : Application
         // get_Resources throws COMException 0x8000FFFF (E_UNEXPECTED). InitializeComponent having
         // run is not enough. The first Apply happens at the top of OnLaunched.
         Theme = new ThemeService();
+
+        // v1.1. Before any window, so the first frame already has the saved text size. Nothing is
+        // registered yet, so this only stores the number - no Rendering subscription this early.
+        TextScale.Factor = Settings.TextScalePercent / 100;
     }
 
     /// <summary>

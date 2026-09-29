@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:services="using:MusicPlayer.Services">
 
     <!--
         Step 13-D. This is a FULL RETEMPLATE of WinUI's ContentDialog, ported from
@@ -294,7 +295,7 @@
                                                             Content="{TemplateBinding Title}"
                                                             ContentTemplate="{TemplateBinding TitleTemplate}"
                                                             FontFamily="{StaticResource Font.Display}"
-                                                            FontSize="{StaticResource FontSize.Heading2}"
+                                                            services:TextScale.BaseSize="{StaticResource FontSize.Heading2}"
                                                             FontWeight="SemiBold"
                                                             Foreground="{TemplateBinding Foreground}"
                                                             HorizontalAlignment="Left"
@@ -320,7 +321,7 @@
                                                               ContentTemplate="{TemplateBinding ContentTemplate}"
                                                               Content="{TemplateBinding Content}"
                                                               FontFamily="{StaticResource Font.Text}"
-                                                              FontSize="{StaticResource FontSize.Body}"
+                                                              services:TextScale.BaseSize="{StaticResource FontSize.Body}"
                                                               Foreground="{TemplateBinding Foreground}"
                                                               TextWrapping="Wrap" />
                                         </Grid>

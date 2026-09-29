@@ -17,14 +17,16 @@
           Padding="{StaticResource Space.Page.Padding}"
           RowSpacing="{StaticResource Space.L}">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" MinHeight="{StaticResource Size.PageHeader.MinHeight}" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
         <TextBlock Grid.Row="0"
                    Style="{StaticResource Text.Heading1}"
                    Text="Dashboard"
-                   HorizontalAlignment="Left" />
+                   TextLineBounds="Tight"
+                   HorizontalAlignment="Left"
+                   VerticalAlignment="Center" />
 
         <ScrollViewer Grid.Row="1"
                       x:Name="DashboardContent"

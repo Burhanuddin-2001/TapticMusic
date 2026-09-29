@@ -2,7 +2,9 @@
 using Microsoft.UI.Input;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
@@ -42,6 +44,22 @@ public sealed partial class MainWindow : Window
 
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(AppTitleBar);
+
+        // v1.1. Hides the system caption buttons so the title bar's own neo-brutalist set can stand
+        // in their place. The drag region and the resize borders are untouched: those come from
+        // SetTitleBar and the window frame, not from this option. It also zeroes RightInset, which
+        // is what lets the TitleBar control give the space back to RightHeader.
+        AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Collapsed;
+
+        // A drag to the screen edge, Win+Up and a title bar double-click all maximize without
+        // going through our button, so the glyph follows the window, not the click.
+        AppWindow.Changed += (_, args) =>
+        {
+            if (args.DidPresenterChange || args.DidSizeChange)
+            {
+                SyncMaximizeButton();
+            }
+        };
 
         AppWindow.SetIcon("Assets/AppIcon.ico");
 
@@ -244,7 +262,8 @@ public sealed partial class MainWindow : Window
         // A focused Slider keeps the bare arrows. The seek bar is already bracketed by
         // BeginScrub/EndScrub and the volume bar is doing the same job these keys would; Space and
         // every Ctrl pair still reach the shell, which is why this no longer returns on any key.
-        if (focused is Slider && !control
+        // RangeBase rather than Slider since v1.1, so the text-size dial keeps them too.
+        if (focused is RangeBase && !control
             && e.Key is VirtualKey.Left or VirtualKey.Right or VirtualKey.Up or VirtualKey.Down)
         {
             return;
@@ -294,6 +313,42 @@ public sealed partial class MainWindow : Window
         => RootFrame.Content is IArrowHost host
            && host.ArrowTarget is Control target
            && target.Focus(FocusState.Keyboard);
+
+    private void MinimizeButton_Click(object sender, RoutedEventArgs e)
+        => (AppWindow.Presenter as OverlappedPresenter)?.Minimize();
+
+    private void MaximizeButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (AppWindow.Presenter is not OverlappedPresenter presenter)
+        {
+            return;
+        }
+
+        if (presenter.State == OverlappedPresenterState.Maximized)
+        {
+            presenter.Restore();
+        }
+        else
+        {
+            presenter.Maximize();
+        }
+    }
+
+    private void CloseButton_Click(object sender, RoutedEventArgs e) => Close();
+
+    /// <summary>
+    /// v1.1. ChromeMaximizeContrast or ChromeRestoreContrast, with the tooltip and the automation
+    /// name kept in step, so a screen reader never announces the action the button no longer does.
+    /// </summary>
+    private void SyncMaximizeButton()
+    {
+        bool maximized = AppWindow.Presenter is OverlappedPresenter { State: OverlappedPresenterState.Maximized };
+        string action = maximized ? "Restore" : "Maximize";
+
+        MaximizeGlyph.Glyph = maximized ? "" : "";
+        ToolTipService.SetToolTip(MaximizeButton, action);
+        AutomationProperties.SetName(MaximizeButton, action);
+    }
 
     private void QueueList_ItemClick(object sender, ItemClickEventArgs e)
         => Player.JumpTo(((ListView)sender).Items.IndexOf(e.ClickedItem));

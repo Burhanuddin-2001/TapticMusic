@@ -51,15 +51,63 @@
         </Grid.RowDefinitions>
 
         <!-- Step 10c. Elevated, same as the player bar, so the app is bracketed top and bottom.
-             The caption buttons are system-drawn and are coloured from MainWindow.xaml.cs. -->
-        <TitleBar x:Name="AppTitleBar"
-                  Grid.Row="0"
-                  Title="Taptic Music"
-                  Background="{ThemeResource Brush.Background.Elevated}">
-            <TitleBar.IconSource>
-                <ImageIconSource ImageSource="Assets/AppIcon.ico" />
-            </TitleBar.IconSource>
-        </TitleBar>
+
+             v1.1. The Border is the hard bottom edge. Border.Default is near-black in BOTH themes,
+             so the edge stays dark whichever theme is on.
+
+             The caption buttons are ours now, not the system's. MainWindow.xaml.cs collapses the
+             system set with TitleBarHeightOption.Collapsed; the system can only recolour its own
+             buttons, never give them a border, a shadow or a press. RightHeader is the one slot
+             the TitleBar control marks as Passthrough in full, so these three receive the pointer
+             while the rest of the bar still drags the window. -->
+        <Border Grid.Row="0"
+                BorderBrush="{ThemeResource Brush.Border.Default}"
+                BorderThickness="{StaticResource BorderWidth.TitleBar.Bottom}">
+            <TitleBar x:Name="AppTitleBar"
+                      Title="Taptic Music"
+                      Background="{ThemeResource Brush.Background.Elevated}">
+                <TitleBar.IconSource>
+                    <ImageIconSource ImageSource="Assets/AppIcon.ico" />
+                </TitleBar.IconSource>
+
+                <TitleBar.RightHeader>
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="{StaticResource Space.S}"
+                                Margin="{StaticResource Space.TitleBar.Caption.Margin}"
+                                VerticalAlignment="Center">
+                        <Button Style="{StaticResource CaptionButtonStyle}"
+                                Click="MinimizeButton_Click"
+                                ToolTipService.ToolTip="Minimize"
+                                AutomationProperties.Name="Minimize">
+                            <FontIcon Glyph="&#xEF2D;" FontSize="{StaticResource Size.Glyph.Caption}" />
+                        </Button>
+
+                        <!-- Glyph, tooltip and name all flip to Restore while maximized. -->
+                        <Button x:Name="MaximizeButton"
+                                Style="{StaticResource CaptionButtonStyle}"
+                                Click="MaximizeButton_Click"
+                                ToolTipService.ToolTip="Maximize"
+                                AutomationProperties.Name="Maximize">
+                            <FontIcon x:Name="MaximizeGlyph" Glyph="&#xEF2E;" FontSize="{StaticResource Size.Glyph.Caption}" />
+                        </Button>
+
+                        <!-- Lightweight styling: these two keys are looked up from inside the
+                             template, so overriding them here turns only THIS button red on hover.
+                             Text.OnStatus, not Text.Primary: paper ink on Status.Error is 2.78:1. -->
+                        <Button Style="{StaticResource CaptionButtonStyle}"
+                                Click="CloseButton_Click"
+                                ToolTipService.ToolTip="Close"
+                                AutomationProperties.Name="Close">
+                            <Button.Resources>
+                                <StaticResource x:Key="CaptionButtonBackgroundPointerOver" ResourceKey="Brush.Status.Error" />
+                                <StaticResource x:Key="CaptionButtonForegroundPointerOver" ResourceKey="Brush.Text.OnStatus" />
+                            </Button.Resources>
+                            <FontIcon Glyph="&#xEF2C;" FontSize="{StaticResource Size.Glyph.Caption}" />
+                        </Button>
+                    </StackPanel>
+                </TitleBar.RightHeader>
+            </TitleBar>
+        </Border>
 
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>

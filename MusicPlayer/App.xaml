@@ -28,6 +28,8 @@
                 <ResourceDictionary Source="ms-appx:///Styles/InfoBar.xaml" />
                 <ResourceDictionary Source="ms-appx:///Styles/Slider.xaml" />
                 <ResourceDictionary Source="ms-appx:///Styles/ScrollBar.xaml" />
+                <ResourceDictionary Source="ms-appx:///Styles/RadioButton.xaml" />
+                <ResourceDictionary Source="ms-appx:///Styles/TextSizeDial.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <!-- Other app resources here -->
         </ResourceDictionary>

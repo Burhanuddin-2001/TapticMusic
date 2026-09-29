@@ -9,19 +9,24 @@
           Padding="{StaticResource Space.Page.Padding}"
           RowSpacing="{StaticResource Space.M}">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" MinHeight="{StaticResource Size.PageHeader.MinHeight}" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- Text.Display, not Heading1: design-plan 5.1. -->
+        <!-- Text.Heading1, the same as every other tab's title. v1.1: this and Playlists took
+             Text.Display and read visibly larger than Dashboard, Search and Settings.
+             Title and pill are BOTH centred in the row. The title used to sit at the top while the
+             pill centred, so the pill drifted low as the text size grew. Tight and the overhang are
+             explained at Size.PageHeader.MinHeight. -->
         <StackPanel Grid.Row="0"
                     Orientation="Horizontal"
                     Spacing="{StaticResource Space.M}"
                     HorizontalAlignment="Left">
-            <TextBlock Style="{StaticResource Text.Display}" Text="Library" />
+            <TextBlock Style="{StaticResource Text.Heading1}" Text="Library" TextLineBounds="Tight" VerticalAlignment="Center" />
             <controls:BadgePill VerticalAlignment="Center"
+                                Margin="{StaticResource Space.PageHeader.Overhang}"
                                 Text="{x:Bind ViewModel.FolderBadge, Mode=OneWay}" />
         </StackPanel>
 

@@ -94,6 +94,28 @@ public sealed class SettingsViewModel : ObservableObject
     }
 
     /// <summary>
+    /// v1.1. The text-size dial, in percent. Two-way bound to RangeBase.Value, so it is a double and
+    /// arrives unrounded mid-drag; TextScale takes the raw value, which is what keeps the text gliding,
+    /// and SettingsService rounds what it stores. The dial snaps to a whole percent on release.
+    /// </summary>
+    public double TextScalePercent
+    {
+        get => _settings.TextScalePercent;
+        set
+        {
+            _settings.TextScalePercent = value;
+            TextScale.Factor = value / 100;
+
+            // Deliberately NOT Raise() for this property. The getter is rounded, and handing that
+            // back to the dial mid-drag would pull the tape onto whole percents and make it tick.
+            Raise(nameof(TextScaleLabel));
+        }
+    }
+
+    /// <summary>The readout beside the dial. Rounded, so it never shows "112.37%" mid-drag.</summary>
+    public string TextScaleLabel => $"{Math.Round(TextScale.Factor * 100)}%";
+
+    /// <summary>
     /// Whether a library rescan runs at launch. Nullable because a WinUI CheckBox is three-state and
     /// binds bool?; the setter collapses null to false, so an indeterminate box can never be
     /// persisted. Writing it starts SettingsService's 500ms save timer.

@@ -20,6 +20,9 @@
     <Thickness x:Key="BorderWidth.Standard.Thickness">2</Thickness>
     <Thickness x:Key="BorderWidth.PlayerBar.Top">0,3,0,0</Thickness>
     <Thickness x:Key="BorderWidth.QueueRail.Left">2,0,0,0</Thickness>
+    <!-- v1.1. 2, not the player bar's 3: the two rails meet this edge from below at 2, and equal
+         weights make a clean T instead of a step. -->
+    <Thickness x:Key="BorderWidth.TitleBar.Bottom">0,0,0,2</Thickness>
     <Thickness x:Key="BorderWidth.SidebarRail.Right">0,0,2,0</Thickness>
     <!-- Bottom edge only. Gate 0 chose row separators over a full cell grid, so a track row spends
          its 2px on one edge and never on vertical dividers. -->
@@ -56,6 +59,17 @@
          falls 2px right, so 4 is enough for it to land in. -->
     <Thickness x:Key="Size.SidebarRail.Item.Gap">4,0,4,0</Thickness>
     <x:Double x:Key="Size.PlayerBar.Height">92</x:Double>
+    <!-- v1.1. The title row of every tab. Every tab's row is exactly this tall at every text size,
+         so a title never moves when you switch tabs, and the count pills centre on it.
+
+         It holds because nothing in the row can outgrow it:
+         - The title takes TextLineBounds Tight, so its box is cap height only: about 39 at 250%.
+           Tight is also what makes centring optical. A full line box includes the descender, and
+           its centre sat 4.5px below the capitals at 250%, so the pill looked low.
+         - The pill and the Playlists button take Space.PageHeader.Overhang, so they may spill a
+           few pixels into the page padding and the row gap instead of stretching the row.
+         Applied as RowDefinition.MinHeight, with the title VerticalAlignment Center in the row. -->
+    <x:Double x:Key="Size.PageHeader.MinHeight">48</x:Double>
     <x:Double x:Key="Size.QueueRail.Width">300</x:Double>
     <x:Double x:Key="Size.Window.MinWidth">900</x:Double>
     <x:Double x:Key="Size.Window.MinHeight">600</x:Double>
@@ -109,6 +123,19 @@
     <x:Double x:Key="Size.Glyph.Small">14</x:Double>
     <x:Double x:Key="Size.Glyph.Medium">18</x:Double>
     <x:Double x:Key="Size.Glyph.Large">24</x:Double>
+    <!-- v1.1. The Chrome*Contrast glyphs are drawn for a 10px box; 12 keeps their heavier stroke
+         inside a 32 caption button without crowding the 2px border. -->
+    <x:Double x:Key="Size.Glyph.Caption">12</x:Double>
+
+    <!-- v1.1. WinUI-owned key, flat entry, same merge-order win as ControlCornerRadius above. The
+         TitleBar control switches to this height as soon as it has a RightHeader, and WinUI's 48
+         would grow the bar by 16px for three 32px buttons. 40 = 32, plus the 2px shadow, plus 3
+         above and 3 below. -->
+    <x:Double x:Key="TitleBarExpandedHeight">40</x:Double>
+    <!-- v1.1. WinUI keeps a 48px drag strip between RightHeader and the system buttons. With the
+         system buttons gone it sat to the RIGHT of close, so close no longer met the window edge.
+         The whole bar left of the buttons still drags. -->
+    <x:Double x:Key="TitleBarMinDragRegionWidth">0</x:Double>
 
     <!-- Keyboard focus ring offset, applied per control in Step 04. design-plan section 4 state matrix. -->
     <Thickness x:Key="Focus.Visual.Margin">-4</Thickness>
@@ -134,6 +161,21 @@
          Inset components: 80 - 4 - 18 - 22. If any of those four keys move, this one moves with them.
          x:Double, not Thickness: it is read by DoubleAnimation.To, the same as Shadow.Offset. -->
     <x:Double x:Key="Size.Switch.Thumb.Travel">36</x:Double>
+
+    <!-- Text-size dial, v1.1. One tick per percent, so Tick.Spacing is also how far a drag must
+         travel for 1%: 8 makes 1% a deliberate move without making the 80-250 range a long haul.
+         Needle.Height is also where the labels start, so the needle never covers a number.
+         72 = the 2px border twice, plus 26 of needle, plus room for a label at 250%. -->
+    <x:Double x:Key="Size.Dial.Height">72</x:Double>
+    <x:Double x:Key="Size.Dial.Tick.Spacing">8</x:Double>
+    <x:Double x:Key="Size.Dial.Tick.Width">2</x:Double>
+    <x:Double x:Key="Size.Dial.Tick.Minor">8</x:Double>
+    <x:Double x:Key="Size.Dial.Tick.Middle">14</x:Double>
+    <x:Double x:Key="Size.Dial.Tick.Major">22</x:Double>
+    <x:Double x:Key="Size.Dial.Needle.Width">8</x:Double>
+    <x:Double x:Key="Size.Dial.Needle.Height">26</x:Double>
+    <!-- Fixed, so a label that grows with the text stays centred on its tick. 56 fits "250" at 250%. -->
+    <x:Double x:Key="Size.Dial.Label.Width">56</x:Double>
 
     <!-- Volume slider. Solid fill, not segmented. -->
     <x:Double x:Key="Size.VolumeBar.Width">110</x:Double>

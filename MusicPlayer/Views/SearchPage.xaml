@@ -10,7 +10,7 @@
           Padding="{StaticResource Space.Page.Padding}"
           RowSpacing="{StaticResource Space.L}">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" MinHeight="{StaticResource Size.PageHeader.MinHeight}" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
@@ -18,7 +18,9 @@
         <TextBlock Grid.Row="0"
                    Style="{StaticResource Text.Heading1}"
                    Text="Search"
-                   HorizontalAlignment="Left" />
+                   TextLineBounds="Tight"
+                   HorizontalAlignment="Left"
+                   VerticalAlignment="Center" />
 
         <TextBox Grid.Row="1"
                  Style="{StaticResource PillTextBoxStyle}"

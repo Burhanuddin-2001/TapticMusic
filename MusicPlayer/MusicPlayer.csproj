@@ -22,9 +22,10 @@
     <Content Include="Assets\SplashScreen.scale-200.png" />
     <Content Include="Assets\LockScreenLogo.scale-200.png" />
     <Content Include="Assets\Square150x150Logo.scale-200.png" />
-    <Content Include="Assets\Square44x44Logo.scale-200.png" />
-    <Content Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png" />
-    <Content Include="Assets\Square44x44Logo.targetsize-48_altform-lightunplated.png" />
+    <!-- v1.1. The full targetsize set. The taskbar picks the targetsize-N_altform-unplated file
+         closest to its slot; with only a 24 shipped it stretched that 24 up at every scale above
+         100%, which is why the taskbar icon was blurry. -->
+    <Content Include="Assets\Square44x44Logo.*.png" />
     <Content Include="Assets\StoreLogo.png" />
     <Content Include="Assets\AppIcon.ico" />
     <Content Include="Assets\Wide310x150Logo.scale-200.png" />
