@@ -10,7 +10,7 @@
   <Identity
     Name="8DCC6394-D931-4C32-9F94-E94E823E6446"
     Publisher="CN=Burhanuddin (NL)"
-    Version="1.0.0.0" />
+    Version="1.2.0.0" />
 
   <mp:PhoneIdentity PhoneProductId="8DCC6394-D931-4C32-9F94-E94E823E6446" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 

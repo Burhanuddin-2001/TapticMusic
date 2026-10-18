@@ -71,7 +71,10 @@
          Applied as RowDefinition.MinHeight, with the title VerticalAlignment Center in the row. -->
     <x:Double x:Key="Size.PageHeader.MinHeight">48</x:Double>
     <x:Double x:Key="Size.QueueRail.Width">300</x:Double>
-    <x:Double x:Key="Size.Window.MinWidth">900</x:Double>
+    <!-- v1.3: 916, was 900. This is the window's OUTER width, and Windows' resize borders take
+         about 13 of it. That slack was covered by accident until the fader took 22 of the page:
+         at 900 the Dashboard dropped to one tile per row. See Size.Tile. -->
+    <x:Double x:Key="Size.Window.MinWidth">916</x:Double>
     <x:Double x:Key="Size.Window.MinHeight">600</x:Double>
 
     <!-- Text-scaling safety: rows use MinHeight, never Height. design-plan section 7.1. -->
@@ -96,12 +99,13 @@
     <!-- Square cover tile, Step 14. Shared by the Playlists index and the Dashboard deal.
 
          220 is measured against the narrowest the app can get, not chosen by eye.
-         Size.Window.MinWidth is 900, less the 70 sidebar rail, less the queue rail's 300 plus its
-         2px border, leaves a 528 frame; less 48 of Space.Page.Padding and roughly 12 of scrollbar
-         leaves about 468. An ItemsWrapGrid cell is this width PLUS the gap below, so two cells cost
+         Size.Window.MinWidth is 916, about 903 inside the resize borders; less the 70 sidebar rail
+         and the queue rail's 300 plus its 2px border, that leaves a 531 frame; less 48 of
+         Space.Page.Padding and, once the page scrolls, the 22 of Size.Fader.Width, 461. An
+         ItemsWrapGrid cell is this width PLUS the gap below, so two cells cost
          456 and fit, and three cost 684 and do not. That is why both hosts wrap instead of using a
          fixed-column Grid: at the minimum size the row holds two, and it holds four on a normal
-         window. Widening this key past 226 silently drops the minimum window to one tile per row.
+         window. Widening this key past 222 silently drops the minimum window to one tile per row.
 
          Height is deliberately NOT a token. The art row is exactly this square and the text band
          below it sizes to its own content, so the tile grows with Windows text scaling instead of
@@ -182,5 +186,35 @@
     <x:Double x:Key="Size.VolumeBar.Height">10</x:Double>
     <x:Double x:Key="Size.VolumeBar.Thumb.Width">12</x:Double>
     <x:Double x:Key="Size.VolumeBar.Thumb.Height">20</x:Double>
+
+    <!-- Channel Fader, v1.3: every scroll bar in the app. Styles/ScrollBar.xaml.
+
+         The width is also the column every ScrollViewer now keeps for its bar, so it is a layout
+         number and not only a look. It must stay at 27 or under: at Size.Window.MinWidth a page is
+         about 483 wide inside its padding, and two Size.Tile cells need 456 of that.
+         Inside the 22: ticks from 1 to 7, the slot from 9 to 13, the cap from 3 to 19 and its
+         shadow to 21. Move one of these and the others move with it. -->
+    <x:Double x:Key="Size.Fader.Width">22</x:Double>
+    <!-- For a header that sits outside its list and must stop where the rows stop. -->
+    <Thickness x:Key="Size.Fader.Gutter">0,0,22,0</Thickness>
+    <x:Double x:Key="Size.Fader.Slot.Width">4</x:Double>
+    <!-- Slot and scale end 6 in from the top and 8 from the bottom, so neither shows past a cap
+         parked at either end: 6 is inside the cap, 8 also clears its 2px shadow. -->
+    <Thickness x:Key="Size.Fader.Slot.Margin">9,6,0,8</Thickness>
+    <Thickness x:Key="Size.Fader.Scale.Margin">1,6,0,8</Thickness>
+    <x:Double x:Key="Size.Fader.Tick.Minor">4</x:Double>
+    <x:Double x:Key="Size.Fader.Tick.Major">6</x:Double>
+    <x:Double x:Key="Size.Fader.Cap.Width">16</x:Double>
+    <Thickness x:Key="Size.Fader.Cap.Margin">3,0,0,0</Thickness>
+    <!-- The smallest the cap gets, which is the size it has on any long list. WinUI's own floor is
+         30; 40 keeps the cap a thing you can grab. -->
+    <x:Double x:Key="Size.Fader.Cap.MinLength">40</x:Double>
+    <x:Double x:Key="Size.Fader.Grip.Width">10</x:Double>
+    <x:Double x:Key="Size.Fader.Now">10</x:Double>
+    <x:Double x:Key="Size.Fader.Strip.MaxWidth">240</x:Double>
+    <!-- Horizontal twins of the slot and cap margins. No list in the app scrolls sideways; WinUI's
+         ScrollBar still has to be able to. -->
+    <Thickness x:Key="Size.Fader.Slot.Margin.Horizontal">6,9,8,0</Thickness>
+    <Thickness x:Key="Size.Fader.Cap.Margin.Horizontal">0,3,0,0</Thickness>
 
 </ResourceDictionary>

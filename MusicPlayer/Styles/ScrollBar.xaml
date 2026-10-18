@@ -1,46 +1,470 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:MusicPlayer.Controls">
 
     <!--
-        ScrollBar is restyled by overriding WinUI's own brush keys, not by retemplating.
-        The default ScrollBar template is ~400 lines with conservative/expanded states; copying
-        it to change four colours would be a large diff with nothing gained.
+        v1.3. THE CHANNEL FADER. Every scroll bar in the app is a mixing-desk fader: a square cap
+        riding in a black slot, with a printed scale beside it. Chosen 2026-09-29 over an LED ladder
+        and a fisheye ruler, from working mock-ups of all three.
 
-        The square thumb comes from ControlCornerRadius = 0 in Themes/Metrics.xaml, which squares
-        every WinUI default template at once.
+        Until v1.3 this file only re-coloured WinUI's own bar, and that bar was the problem, not its
+        colour: a 2px line drawn ON TOP of the rows, gone a second after the pointer stopped. It sat
+        across the Library's TIME column, and on the queue rail it was so faint the rail read as
+        unscrollable. So this is a full template now, in three parts that only make sense together:
 
-        These keys live in WinUI's ThemeDictionaries, so the overrides must be in theme
-        dictionaries too. A flat resource would not win the lookup.
+        1. The ScrollViewer, at the bottom of this file, gives the bar a column of its own.
+        2. The ScrollBar is the fader: slot, scale, cap, and the page buttons either side of the cap.
+        3. controls:FaderMarks lays the NOW notch and the label strip over it. Controls/FaderMarks.cs.
+
+        The fader never fades out, so none of WinUI's indicator or expand states are drawn here. The
+        ScrollBar still raises them; with no matching state in the template they change nothing.
     -->
 
-    <ResourceDictionary.ThemeDictionaries>
+    <!-- The printed scale. A tick every tenth of the travel, heavier at both ends and the middle. -->
+    <Style x:Key="FaderTickStyle" TargetType="Rectangle">
+        <Setter Property="Width" Value="{StaticResource Size.Fader.Tick.Minor}" />
+        <Setter Property="Height" Value="{StaticResource BorderWidth.Standard}" />
+        <Setter Property="HorizontalAlignment" Value="Right" />
+        <Setter Property="VerticalAlignment" Value="Top" />
+        <Setter Property="Fill" Value="{ThemeResource Brush.Text.Secondary}" />
+    </Style>
 
-        <ResourceDictionary x:Key="Default">
-            <StaticResource x:Key="ScrollBarThumbFill" ResourceKey="Brush.Surface.Hover" />
-            <StaticResource x:Key="ScrollBarThumbFillPointerOver" ResourceKey="Brush.Text.Secondary" />
-            <StaticResource x:Key="ScrollBarThumbFillPressed" ResourceKey="Brush.Accent.Primary" />
-            <StaticResource x:Key="ScrollBarThumbFillDisabled" ResourceKey="Brush.Background.Surface" />
+    <Style x:Key="FaderMajorTickStyle" TargetType="Rectangle" BasedOn="{StaticResource FaderTickStyle}">
+        <Setter Property="Width" Value="{StaticResource Size.Fader.Tick.Major}" />
+        <Setter Property="Fill" Value="{ThemeResource Brush.Text.Primary}" />
+    </Style>
 
-            <StaticResource x:Key="ScrollBarTrackFill" ResourceKey="Brush.Background.Surface" />
-            <StaticResource x:Key="ScrollBarTrackFillPointerOver" ResourceKey="Brush.Background.Surface" />
-            <StaticResource x:Key="ScrollBarTrackFillDisabled" ResourceKey="Brush.Background.Surface" />
+    <!-- The three lines across the cap: the index line in the middle, a grip line either side. -->
+    <Style x:Key="FaderGripStyle" TargetType="Rectangle">
+        <Setter Property="Width" Value="{StaticResource Size.Fader.Grip.Width}" />
+        <Setter Property="Height" Value="{StaticResource BorderWidth.Standard}" />
+        <Setter Property="Fill" Value="{ThemeResource Brush.Text.Secondary}" />
+    </Style>
 
-            <StaticResource x:Key="ScrollBarTrackStroke" ResourceKey="Brush.Border.Default" />
-            <StaticResource x:Key="ScrollBarTrackStrokePointerOver" ResourceKey="Brush.Border.Default" />
-            <StaticResource x:Key="ScrollBarTrackStrokeDisabled" ResourceKey="Brush.Border.Default" />
+    <!-- The slot above and below the cap. Invisible, but it is what takes a click and pages. -->
+    <Style x:Key="FaderPageButtonStyle" TargetType="RepeatButton">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="VerticalAlignment" Value="Stretch" />
+        <Setter Property="Interval" Value="{StaticResource Motion.Repeat.Interval}" />
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="AllowFocusOnInteraction" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RepeatButton">
+                    <Grid Background="{TemplateBinding Background}" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
 
-            <StaticResource x:Key="ScrollBarButtonBackground" ResourceKey="Brush.Background.Surface" />
-            <StaticResource x:Key="ScrollBarButtonBackgroundPointerOver" ResourceKey="Brush.Surface.Hover" />
-            <StaticResource x:Key="ScrollBarButtonBackgroundPressed" ResourceKey="Brush.Accent.PrimaryPressed" />
-            <StaticResource x:Key="ScrollBarButtonBackgroundDisabled" ResourceKey="Brush.Background.Surface" />
+    <!--
+        THE CAP. Same build as every button and slider thumb in the app: the Grid is the template ROOT
+        and carries the states, a shadow slab is drawn first, and the face rides a TranslateTransform
+        so a press drops it 2px onto its own shadow.
 
-            <StaticResource x:Key="ScrollBarButtonArrowForeground" ResourceKey="Brush.Text.Primary" />
-            <StaticResource x:Key="ScrollBarButtonArrowForegroundPointerOver" ResourceKey="Brush.Text.Primary" />
-            <StaticResource x:Key="ScrollBarButtonArrowForegroundPressed" ResourceKey="Brush.Text.OnAccent" />
-            <StaticResource x:Key="ScrollBarButtonArrowForegroundDisabled" ResourceKey="Brush.Text.Secondary" />
-        </ResourceDictionary>
+        Neutral at rest and accent only while held, unlike the seek and volume thumbs, which are accent
+        all the time. The queue rail shows the playing song in accent right next to its fader, and an
+        accent cap beside it would compete with the one thing the accent is there to point at.
+    -->
+    <Style x:Key="FaderCapStyle" TargetType="Thumb">
+        <Setter Property="Background" Value="{ThemeResource Brush.Elevated.Hover}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource Brush.Border.Default}" />
+        <Setter Property="BorderThickness" Value="{StaticResource BorderWidth.Standard.Thickness}" />
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Thumb">
+                    <Grid x:Name="Layout">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="PressTransform"
+                                                         Storyboard.TargetProperty="X"
+                                                         To="0"
+                                                         Duration="{StaticResource Motion.Duration.Fast}" />
+                                        <DoubleAnimation Storyboard.TargetName="PressTransform"
+                                                         Storyboard.TargetProperty="Y"
+                                                         To="0"
+                                                         Duration="{StaticResource Motion.Duration.Fast}" />
+                                    </Storyboard>
+                                </VisualState>
 
-    </ResourceDictionary.ThemeDictionaries>
+                                <VisualState x:Name="PointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="Face.Background" Value="{ThemeResource Brush.Text.Secondary}" />
+                                        <Setter Target="IndexLine.Fill" Value="{ThemeResource Brush.Background.Canvas}" />
+                                        <Setter Target="GripTop.Fill" Value="{ThemeResource Brush.Background.Elevated}" />
+                                        <Setter Target="GripBottom.Fill" Value="{ThemeResource Brush.Background.Elevated}" />
+                                    </VisualState.Setters>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="PressTransform"
+                                                         Storyboard.TargetProperty="X"
+                                                         To="0"
+                                                         Duration="{StaticResource Motion.Duration.Fast}" />
+                                        <DoubleAnimation Storyboard.TargetName="PressTransform"
+                                                         Storyboard.TargetProperty="Y"
+                                                         To="0"
+                                                         Duration="{StaticResource Motion.Duration.Fast}" />
+                                    </Storyboard>
+                                </VisualState>
+
+                                <!-- A Thumb stays in Pressed for the whole drag, so this is the held look. -->
+                                <VisualState x:Name="Pressed">
+                                    <VisualState.Setters>
+                                        <Setter Target="Face.Background" Value="{ThemeResource Brush.Accent.Primary}" />
+                                        <Setter Target="IndexLine.Fill" Value="{ThemeResource Brush.Text.OnAccent}" />
+                                        <Setter Target="GripTop.Fill" Value="{ThemeResource Brush.Text.OnAccent}" />
+                                        <Setter Target="GripBottom.Fill" Value="{ThemeResource Brush.Text.OnAccent}" />
+                                    </VisualState.Setters>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="PressTransform"
+                                                         Storyboard.TargetProperty="X"
+                                                         To="{StaticResource Shadow.Offset}"
+                                                         Duration="{StaticResource Motion.Duration.Fast}" />
+                                        <DoubleAnimation Storyboard.TargetName="PressTransform"
+                                                         Storyboard.TargetProperty="Y"
+                                                         To="{StaticResource Shadow.Offset}"
+                                                         Duration="{StaticResource Motion.Duration.Fast}" />
+                                    </Storyboard>
+                                </VisualState>
+
+                                <VisualState x:Name="Disabled">
+                                    <VisualState.Setters>
+                                        <Setter Target="Layout.Opacity" Value="0.4" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+
+                        <Border Background="{ThemeResource Brush.Shadow}"
+                                Margin="{StaticResource Shadow.Offset.Thickness}" />
+
+                        <Border x:Name="Face"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}">
+                            <Border.RenderTransform>
+                                <TranslateTransform x:Name="PressTransform" />
+                            </Border.RenderTransform>
+
+                            <StackPanel HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Spacing="{StaticResource Space.XS}">
+                                <Rectangle x:Name="GripTop" Style="{StaticResource FaderGripStyle}" />
+                                <Rectangle x:Name="IndexLine" Style="{StaticResource FaderGripStyle}" Fill="{ThemeResource Brush.Text.Primary}" />
+                                <Rectangle x:Name="GripBottom" Style="{StaticResource FaderGripStyle}" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- The NOW notch: the accent, like the playing row it points at. Not a tab stop, the same as
+         the bar it sits on; the keyboard reaches the playing row through the list itself. -->
+    <Style x:Key="FaderNowButtonStyle" TargetType="Button">
+        <Setter Property="Width" Value="{StaticResource Size.Fader.Now}" />
+        <Setter Property="Height" Value="{StaticResource Size.Fader.Now}" />
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Face"
+                            Background="{ThemeResource Brush.Accent.Primary}"
+                            BorderBrush="{ThemeResource Brush.Border.Default}"
+                            BorderThickness="{StaticResource BorderWidth.Standard.Thickness}">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="PointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="Face.Background" Value="{ThemeResource Brush.Accent.PrimaryPressed}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <VisualState.Setters>
+                                        <Setter Target="Face.Background" Value="{ThemeResource Brush.Text.Primary}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--
+        The label strip hangs off the left of the cap, over the list. A Canvas is the root because a
+        Canvas never clips: the strip is placed at a negative Left, outside the 22px column this
+        control lives in, and any Panel that arranges its children would cut it off at that edge.
+    -->
+    <Style TargetType="controls:FaderMarks">
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="controls:FaderMarks">
+                    <Canvas>
+                        <Button x:Name="PART_Now"
+                                Style="{StaticResource FaderNowButtonStyle}"
+                                Visibility="Collapsed"
+                                ToolTipService.ToolTip="Go to the playing song"
+                                AutomationProperties.Name="Go to the playing song" />
+
+                        <Grid x:Name="PART_Strip"
+                              MaxWidth="{StaticResource Size.Fader.Strip.MaxWidth}"
+                              IsHitTestVisible="False"
+                              Visibility="Collapsed">
+                            <Border Background="{ThemeResource Brush.Shadow}"
+                                    Margin="{StaticResource Shadow.Offset.Thickness}" />
+
+                            <Border Background="{ThemeResource Brush.Background.Elevated}"
+                                    BorderBrush="{ThemeResource Brush.Border.Default}"
+                                    BorderThickness="{StaticResource BorderWidth.Standard.Thickness}"
+                                    Padding="{StaticResource Space.S.Thickness}">
+                                <StackPanel Spacing="{StaticResource Space.XS}">
+                                    <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.S}">
+                                        <TextBlock x:Name="PART_Row"
+                                                   Style="{StaticResource Text.Heading2}"
+                                                   Typography.NumeralAlignment="Tabular"
+                                                   VerticalAlignment="Bottom" />
+                                        <TextBlock x:Name="PART_Count"
+                                                   Style="{StaticResource Text.Caption}"
+                                                   Typography.NumeralAlignment="Tabular"
+                                                   VerticalAlignment="Bottom" />
+                                    </StackPanel>
+                                    <TextBlock x:Name="PART_Title"
+                                               Style="{StaticResource Text.Title}"
+                                               TextTrimming="CharacterEllipsis" />
+                                    <TextBlock x:Name="PART_Artist"
+                                               Style="{StaticResource Text.Caption}"
+                                               TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </Canvas>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--
+        THE FADER. The part names and the five-row skeleton are WinUI's and must stay: the ScrollBar's
+        own code sizes VerticalThumb and sets VerticalLargeDecrease's Height to move the cap, the same
+        way the Slider template in Slider.xaml is driven. The arrow buttons are kept as parts but
+        collapsed, because a fader has none.
+
+        Min, not fixed, width and height, the way WinUI's own style does it: one implicit style serves
+        both orientations, and a fixed Width would pin a horizontal bar to 22px long.
+    -->
+    <Style TargetType="ScrollBar">
+        <Setter Property="MinWidth" Value="{StaticResource Size.Fader.Width}" />
+        <Setter Property="MinHeight" Value="{StaticResource Size.Fader.Width}" />
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ScrollBar">
+                    <Grid x:Name="Root">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="Disabled">
+                                    <VisualState.Setters>
+                                        <Setter Target="Root.Opacity" Value="0.4" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+
+                            <!-- Ours, not WinUI's: FaderMarks sets these. NoTravel is a list that fits,
+                                 which only the Library shows, because it keeps its bar for its header. -->
+                            <VisualStateGroup x:Name="TravelStates">
+                                <VisualState x:Name="Travel" />
+                                <VisualState x:Name="NoTravel">
+                                    <VisualState.Setters>
+                                        <Setter Target="VerticalRoot.Opacity" Value="0.4" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+
+                        <!-- Transparent, so the whole column is one control: nowhere in it is a dead gap. -->
+                        <Grid x:Name="VerticalRoot" Background="Transparent">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <Grid Grid.RowSpan="5"
+                                  Width="{StaticResource Size.Fader.Tick.Major}"
+                                  HorizontalAlignment="Left"
+                                  Margin="{StaticResource Size.Fader.Scale.Margin}">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+                                <Rectangle Grid.Row="0" Style="{StaticResource FaderMajorTickStyle}" />
+                                <Rectangle Grid.Row="1" Style="{StaticResource FaderTickStyle}" />
+                                <Rectangle Grid.Row="2" Style="{StaticResource FaderTickStyle}" />
+                                <Rectangle Grid.Row="3" Style="{StaticResource FaderTickStyle}" />
+                                <Rectangle Grid.Row="4" Style="{StaticResource FaderTickStyle}" />
+                                <Rectangle Grid.Row="5" Style="{StaticResource FaderMajorTickStyle}" />
+                                <Rectangle Grid.Row="6" Style="{StaticResource FaderTickStyle}" />
+                                <Rectangle Grid.Row="7" Style="{StaticResource FaderTickStyle}" />
+                                <Rectangle Grid.Row="8" Style="{StaticResource FaderTickStyle}" />
+                                <Rectangle Grid.Row="9" Style="{StaticResource FaderTickStyle}" />
+                                <Rectangle Grid.Row="9" Style="{StaticResource FaderMajorTickStyle}" VerticalAlignment="Bottom" />
+                            </Grid>
+
+                            <Rectangle Grid.RowSpan="5"
+                                       Width="{StaticResource Size.Fader.Slot.Width}"
+                                       HorizontalAlignment="Left"
+                                       Margin="{StaticResource Size.Fader.Slot.Margin}"
+                                       Fill="{ThemeResource Brush.Border.Default}" />
+
+                            <RepeatButton x:Name="VerticalSmallDecrease" Grid.Row="0" Visibility="Collapsed" IsTabStop="False" />
+                            <RepeatButton x:Name="VerticalLargeDecrease"
+                                          Grid.Row="1"
+                                          Height="0"
+                                          Style="{StaticResource FaderPageButtonStyle}" />
+                            <Thumb x:Name="VerticalThumb"
+                                   Grid.Row="2"
+                                   Style="{StaticResource FaderCapStyle}"
+                                   Width="{StaticResource Size.Fader.Cap.Width}"
+                                   MinHeight="{StaticResource Size.Fader.Cap.MinLength}"
+                                   HorizontalAlignment="Left"
+                                   Margin="{StaticResource Size.Fader.Cap.Margin}"
+                                   AutomationProperties.AccessibilityView="Raw" />
+                            <RepeatButton x:Name="VerticalLargeIncrease"
+                                          Grid.Row="3"
+                                          Style="{StaticResource FaderPageButtonStyle}" />
+                            <RepeatButton x:Name="VerticalSmallIncrease" Grid.Row="4" Visibility="Collapsed" IsTabStop="False" />
+
+                            <!-- Last, so the notch draws over the cap and takes its own clicks. -->
+                            <controls:FaderMarks Grid.RowSpan="5" />
+                        </Grid>
+
+                        <Grid x:Name="HorizontalRoot" Background="Transparent">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <Rectangle Grid.ColumnSpan="5"
+                                       Height="{StaticResource Size.Fader.Slot.Width}"
+                                       VerticalAlignment="Top"
+                                       Margin="{StaticResource Size.Fader.Slot.Margin.Horizontal}"
+                                       Fill="{ThemeResource Brush.Border.Default}" />
+
+                            <RepeatButton x:Name="HorizontalSmallDecrease" Grid.Column="0" Visibility="Collapsed" IsTabStop="False" />
+                            <RepeatButton x:Name="HorizontalLargeDecrease"
+                                          Grid.Column="1"
+                                          Width="0"
+                                          Style="{StaticResource FaderPageButtonStyle}" />
+                            <Thumb x:Name="HorizontalThumb"
+                                   Grid.Column="2"
+                                   Style="{StaticResource FaderCapStyle}"
+                                   Height="{StaticResource Size.Fader.Cap.Width}"
+                                   MinWidth="{StaticResource Size.Fader.Cap.MinLength}"
+                                   VerticalAlignment="Top"
+                                   Margin="{StaticResource Size.Fader.Cap.Margin.Horizontal}"
+                                   AutomationProperties.AccessibilityView="Raw" />
+                            <RepeatButton x:Name="HorizontalLargeIncrease"
+                                          Grid.Column="3"
+                                          Style="{StaticResource FaderPageButtonStyle}" />
+                            <RepeatButton x:Name="HorizontalSmallIncrease" Grid.Column="4" Visibility="Collapsed" IsTabStop="False" />
+                        </Grid>
+
+                        <!-- WinUI's touch-panning indicator. Kept as parts the ScrollBar code looks for,
+                             never shown: the fader stays up during a pan too. -->
+                        <Grid x:Name="VerticalPanningRoot" Visibility="Collapsed">
+                            <Border x:Name="VerticalPanningThumb" />
+                        </Grid>
+                        <Grid x:Name="HorizontalPanningRoot" Visibility="Collapsed">
+                            <Border x:Name="HorizontalPanningThumb" />
+                        </Grid>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--
+        THE SCROLLVIEWER. WinUI's template spreads the content across BOTH columns and floats the bars
+        over it, which is how its bar came to sit on the TIME column. Here the content keeps column 0
+        and the fader gets column 1 to itself, so no row can run underneath it. Everything else is
+        WinUI's template as it was.
+
+        Auto rather than WinUI's Visible: a page that fits gets no fader and no empty column. Lists
+        were Auto already; the Library asks for Visible itself, so its header never has to move.
+
+        CAREFUL: this is implicit, so it also re-templates the ScrollViewer inside every TextBox,
+        MenuFlyout and ContentDialog. Those hide their bars, and a hidden bar's column is 0 wide, so
+        they lay out exactly as before.
+    -->
+    <Style TargetType="ScrollViewer">
+        <Setter Property="VerticalScrollBarVisibility" Value="Auto" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ScrollViewer">
+                    <Border x:Name="Root"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="{TemplateBinding CornerRadius}">
+                        <Grid Background="{TemplateBinding Background}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <ScrollContentPresenter x:Name="ScrollContentPresenter"
+                                                    ContentTemplate="{TemplateBinding ContentTemplate}"
+                                                    Margin="{TemplateBinding Padding}" />
+
+                            <ScrollBar x:Name="VerticalScrollBar"
+                                       Grid.Column="1"
+                                       Orientation="Vertical"
+                                       IsTabStop="False"
+                                       Maximum="{TemplateBinding ScrollableHeight}"
+                                       Value="{TemplateBinding VerticalOffset}"
+                                       ViewportSize="{TemplateBinding ViewportHeight}"
+                                       Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}" />
+
+                            <ScrollBar x:Name="HorizontalScrollBar"
+                                       Grid.Row="1"
+                                       Orientation="Horizontal"
+                                       IsTabStop="False"
+                                       Maximum="{TemplateBinding ScrollableWidth}"
+                                       Value="{TemplateBinding HorizontalOffset}"
+                                       ViewportSize="{TemplateBinding ViewportWidth}"
+                                       Visibility="{TemplateBinding ComputedHorizontalScrollBarVisibility}" />
+                        </Grid>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
 </ResourceDictionary>

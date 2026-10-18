@@ -9,6 +9,7 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
 using Microsoft.UI.Xaml.Navigation;
+using MusicPlayer.Models;
 using MusicPlayer.Services;
 using MusicPlayer.ViewModels;
 using MusicPlayer.Views;
@@ -142,12 +143,76 @@ public sealed partial class MainWindow : Window
 
     private void SyncPlayerBar()
     {
-        QueueList.ItemsSource = Player.QueueItems;
-        QueueList.SelectedIndex = Player.QueueIndex;
+        SyncQueue();
         QueueList.Visibility = Player.QueueListVisibility;
         QueueEmptyState.Visibility = Player.EmptyQueueVisibility;
         ErrorBar.IsOpen = Player.HasError;
         ErrorBar.Message = Player.ErrorMessage ?? string.Empty;
+    }
+
+    /// <summary>
+    /// v1.3. This used to assign ItemsSource on every notification, and QueueItems is a new list on
+    /// every read, so each song change rebuilt the rail from nothing - four times, once per name
+    /// OnQueueChanged raises - and threw the scroll position away. A queue scrolled half way down was
+    /// back at the top whenever a song ended.
+    ///
+    /// Now the list is replaced only when its tracks or their order really changed; a song change
+    /// moves the highlight and nothing else. Track does not override Equals, so SequenceEqual compares
+    /// references, which is exactly "the same tracks in the same order".
+    ///
+    /// The rail then follows the playing row, but only while the row that WAS playing is on screen.
+    /// Scroll away on purpose and it stays where you put it.
+    /// </summary>
+    private void SyncQueue()
+    {
+        IReadOnlyList<Track> items = Player.QueueItems;
+        bool replaced = QueueList.ItemsSource is not IReadOnlyList<Track> shown || !shown.SequenceEqual(items);
+        bool following = replaced || IsQueueRowInView(QueueList.SelectedIndex);
+
+        if (replaced)
+        {
+            QueueList.ItemsSource = items;
+        }
+
+        QueueList.SelectedIndex = Player.QueueIndex;
+
+        if (following)
+        {
+            BringQueueRowIntoView(Player.QueueIndex, replaced);
+        }
+    }
+
+    private bool IsQueueRowInView(int index)
+        => index >= 0
+           && QueueList.ItemsPanelRoot is ItemsStackPanel panel
+           && index >= panel.FirstVisibleIndex
+           && index <= panel.LastVisibleIndex;
+
+    /// <summary>
+    /// A row already fully on screen stays put, and one cut off at an edge is nudged in, so a click on
+    /// the bottom row never throws it to the top. A row off screen lands second from the top, with
+    /// the song before it still in sight - and so does every row of a queue that was just replaced,
+    /// because the panel's visible range still describes the old list until the next layout pass.
+    /// </summary>
+    private void BringQueueRowIntoView(int index, bool replaced)
+    {
+        if (index < 0 || index >= QueueList.Items.Count)
+        {
+            return;
+        }
+
+        if (!replaced && QueueList.ItemsPanelRoot is ItemsStackPanel panel
+            && index >= panel.FirstVisibleIndex && index <= panel.LastVisibleIndex)
+        {
+            if (index == panel.FirstVisibleIndex || index == panel.LastVisibleIndex)
+            {
+                QueueList.ScrollIntoView(QueueList.Items[index]);
+            }
+
+            return;
+        }
+
+        QueueList.ScrollIntoView(QueueList.Items[Math.Max(0, index - 1)], ScrollIntoViewAlignment.Leading);
     }
 
     /// <summary>

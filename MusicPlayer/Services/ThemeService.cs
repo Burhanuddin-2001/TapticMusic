@@ -16,7 +16,7 @@ namespace MusicPlayer.Services;
 /// {ThemeResource Brush.*} references resolves to a shared SolidColorBrush object BY REFERENCE, so
 /// assigning .Color on that object repaints every consumer at once — including the three places an
 /// ElementTheme flip provably cannot reach: BadgePill snapshots its brush instance in its
-/// constructor, ScrollBar.xaml aliases 18 WinUI keys to these same instances with StaticResource,
+/// constructor, Button.xaml aliases WinUI's caption button keys to these same instances with StaticResource,
 /// and popups live under the XamlRoot popup root outside RootGrid. A real Light dictionary would
 /// break all three. It also could not express five user-selectable accents at all — there is no
 /// x:Key for "swatch 3". The design rules ban ColorAnimation on these brushes for exactly the reason that

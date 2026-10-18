@@ -10,8 +10,8 @@
              mutates the .Color of the shared SolidColorBrush objects declared below, which every
              one of the app's 191 {ThemeResource Brush.*} references resolves to BY REFERENCE. One
              assignment repaints every consumer at once, including the places an ElementTheme flip
-             cannot reach — popups, tooltips, BadgePill's snapshotted instance, and ScrollBar.xaml's
-             18 StaticResource aliases. A second dictionary would break all three of those.
+             cannot reach — popups, tooltips, BadgePill's snapshotted instance, and the StaticResource
+             aliases in Button.xaml and below. A second dictionary would break all of those.
              It is also the only way five user-selectable accents can work: there is no x:Key for
              "swatch 3".
 
@@ -108,7 +108,7 @@
                  SolidColorBrush it was a second instance holding the same colour, so ThemeService
                  mutating Brush.Focus would have repainted every focus ring in the app EXCEPT the
                  one WinUI actually draws. The alias form makes it literally the same object.
-                 Same construct ScrollBar.xaml uses 18 times.
+                 Same construct as the caption button keys in Styles/Button.xaml.
 
                  Secondary stays a real brush: Transparent is not a token and never changes. -->
             <StaticResource x:Key="SystemControlFocusVisualPrimaryBrush" ResourceKey="Brush.Focus" />

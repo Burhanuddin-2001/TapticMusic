@@ -60,10 +60,15 @@
 
             Gate 0 chose the caret plus a 2px pink underline. Both are pink because design-plan 4.3
             makes a state marker turn its glyph Accent.Primary; turquoise is reserved for focus.
+
+            v1.3. The margin keeps the header off the fader's column, so it stops where the rows stop.
+            That only holds because TrackList keeps its bar Visible: at Auto the column would vanish
+            whenever a filter made the list short, and every header would sit 22px off its cells.
         -->
         <Grid Grid.Row="2"
               x:Name="HeaderRow"
               x:Load="{x:Bind ViewModel.HasTracks, Mode=OneWay}"
+              Margin="{StaticResource Size.Fader.Gutter}"
               ColumnSpacing="{StaticResource Space.S}"
               Padding="{StaticResource Space.S.Thickness}"
               BorderBrush="{ThemeResource Brush.Border.Default}"
@@ -167,6 +172,7 @@
                   x:Load="{x:Bind ViewModel.HasTracks, Mode=OneWay}"
                   ItemsSource="{x:Bind ViewModel.Tracks, Mode=OneWay}"
                   ItemContainerStyle="{StaticResource TrackRowItemStyle}"
+                  ScrollViewer.VerticalScrollBarVisibility="Visible"
                   SelectionMode="Single"
                   IsItemClickEnabled="True"
                   ItemClick="Tracks_ItemClick"

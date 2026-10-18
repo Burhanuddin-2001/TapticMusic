@@ -12,6 +12,10 @@
          on purpose: a page that travels far reads as a slideshow, not a transition. -->
     <x:Double x:Key="Motion.Translate.Page">12</x:Double>
 
+    <!-- v1.3. Milliseconds between repeats while a fader's slot is held down, paging the list. 50 is
+         WinUI's own scroll bar; a RepeatButton left at its default repeats five times slower. -->
+    <x:Int32 x:Key="Motion.Repeat.Interval">50</x:Int32>
+
     <!--
         XAML ONLY. These three keys resolve correctly through {StaticResource} on any Duration
         property in XAML, but the SAME key read from C# via Application.Current.Resources comes
