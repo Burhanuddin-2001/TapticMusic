@@ -8,7 +8,7 @@ namespace MusicPlayer.Data;
 /// rather than stored, for the same reason artists and albums are: one less thing that can drift
 /// out of step with the rows it describes.
 /// </summary>
-public sealed record Playlist(long Id, string Name, int TrackCount, long TotalMs)
+public sealed record Playlist(long Id, string Name, int TrackCount, long TotalMs, bool IsFavorites)
 {
     /// <summary>
     /// "1 track" or "12 tracks". Lives here rather than in a converter because the singular is a
@@ -26,6 +26,16 @@ public sealed record Playlist(long Id, string Name, int TrackCount, long TotalMs
 public sealed class PlaylistRepository
 {
     /// <summary>
+    /// Step 19. The Favorites playlist's display name, and the one name users may not give their own
+    /// playlists. Display only: the code finds Favorites by kind = 1, never by this text.
+    /// </summary>
+    public const string FavoritesName = "Favorites";
+
+    /// <summary>Trimmed, case-insensitive. " favorites " and "FAVORITES" are both reserved.</summary>
+    public static bool IsReservedName(string name)
+        => string.Equals(name.Trim(), FavoritesName, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
     /// A LEFT JOIN so a playlist with nothing in it still comes back, with a count of zero.
     /// </summary>
     public List<Playlist> GetPlaylists()
@@ -35,12 +45,12 @@ public sealed class PlaylistRepository
         using SqliteConnection conn = Db.Open();
         using SqliteCommand cmd = conn.CreateCommand();
         cmd.CommandText = """
-            SELECT p.id, p.name, COUNT(pt.track_id), COALESCE(SUM(t.duration_ms), 0)
+            SELECT p.id, p.name, COUNT(pt.track_id), COALESCE(SUM(t.duration_ms), 0), p.kind
             FROM playlists p
             LEFT JOIN playlist_tracks pt ON pt.playlist_id = p.id
             LEFT JOIN tracks t ON t.id = pt.track_id
-            GROUP BY p.id, p.name
-            ORDER BY p.name COLLATE NOCASE;
+            GROUP BY p.id, p.name, p.kind
+            ORDER BY p.kind DESC, p.name COLLATE NOCASE;
             """;
 
         using SqliteDataReader reader = cmd.ExecuteReader();
@@ -50,7 +60,8 @@ public sealed class PlaylistRepository
                 reader.GetInt64(0),
                 reader.GetString(1),
                 reader.GetInt32(2),
-                reader.GetInt64(3)));
+                reader.GetInt64(3),
+                reader.GetInt64(4) == 1));
         }
 
         return playlists;
@@ -71,18 +82,18 @@ public sealed class PlaylistRepository
         using SqliteConnection conn = Db.Open();
         using SqliteCommand cmd = conn.CreateCommand();
         cmd.CommandText = """
-            SELECT p.id, p.name, COUNT(pt.track_id), COALESCE(SUM(t.duration_ms), 0)
+            SELECT p.id, p.name, COUNT(pt.track_id), COALESCE(SUM(t.duration_ms), 0), p.kind
             FROM playlists p
             JOIN playlist_tracks pt ON pt.playlist_id = p.id
             JOIN tracks t ON t.id = pt.track_id
-            GROUP BY p.id, p.name
+            GROUP BY p.id, p.name, p.kind
             ORDER BY RANDOM() LIMIT 1;
             """;
 
         using SqliteDataReader reader = cmd.ExecuteReader();
 
         return reader.Read()
-            ? new Playlist(reader.GetInt64(0), reader.GetString(1), reader.GetInt32(2), reader.GetInt64(3))
+            ? new Playlist(reader.GetInt64(0), reader.GetString(1), reader.GetInt32(2), reader.GetInt64(3), reader.GetInt64(4) == 1)
             : null;
     }
 
@@ -211,6 +222,56 @@ public sealed class PlaylistRepository
             FROM playlist_tracks WHERE playlist_id = @playlist;
             """;
         cmd.Parameters.AddWithValue("@playlist", playlistId);
+        cmd.Parameters.AddWithValue("@track", trackId);
+        cmd.ExecuteNonQuery();
+        tx.Commit();
+    }
+
+    /// <summary>
+    /// Step 19. A track is a favorite when it has a row in the Favorites playlist. No flag on tracks,
+    /// so there is one source of truth and "Remove from playlist" inside Favorites unfavorites it.
+    /// </summary>
+    public bool IsFavorite(long trackId)
+    {
+        using SqliteConnection conn = Db.Open();
+        using SqliteCommand cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            SELECT EXISTS (
+                SELECT 1 FROM playlist_tracks pt
+                JOIN playlists p ON p.id = pt.playlist_id
+                WHERE p.kind = 1 AND pt.track_id = @track);
+            """;
+        cmd.Parameters.AddWithValue("@track", trackId);
+        return Convert.ToInt64(cmd.ExecuteScalar()) == 1;
+    }
+
+    /// <summary>
+    /// Step 19. On appends like AddTrack, in one transaction, and only if the track is not already
+    /// there: Favorites never holds a duplicate. Off deletes every row of that track; the gap it
+    /// leaves in position is harmless, because reads ORDER BY position, appends use MAX + 1 and a
+    /// reorder rewrites them all.
+    /// </summary>
+    public void SetFavorite(long trackId, bool on)
+    {
+        using SqliteConnection conn = Db.Open();
+        using SqliteTransaction tx = conn.BeginTransaction();
+        using SqliteCommand cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = on
+            ? """
+              INSERT INTO playlist_tracks (playlist_id, track_id, position)
+              SELECT fav.id, @track,
+                     (SELECT COALESCE(MAX(position), -1) + 1 FROM playlist_tracks WHERE playlist_id = fav.id)
+              FROM playlists fav
+              WHERE fav.kind = 1
+                AND NOT EXISTS (SELECT 1 FROM playlist_tracks
+                                WHERE playlist_id = fav.id AND track_id = @track);
+              """
+            : """
+              DELETE FROM playlist_tracks
+              WHERE track_id = @track
+                AND playlist_id = (SELECT id FROM playlists WHERE kind = 1);
+              """;
         cmd.Parameters.AddWithValue("@track", trackId);
         cmd.ExecuteNonQuery();
         tx.Commit();

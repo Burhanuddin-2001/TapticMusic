@@ -92,14 +92,19 @@
                             ContextFlyout set from a Style is one shared object across every tile and
                             they fight over it; a DataTemplate is instantiated per item, so each tile
                             gets its own and DataContext is already the right PlaylistTile.
+
+                            Step 19. The Favorites tile keeps only Play: the app owns that playlist,
+                            so it cannot be renamed or deleted.
                         -->
                         <Grid>
                             <Grid.ContextFlyout>
                                 <MenuFlyout>
                                     <MenuFlyoutItem Text="Play" Click="PlaylistPlay_Click" />
-                                    <MenuFlyoutItem Text="Rename..." Click="PlaylistRename_Click" />
-                                    <MenuFlyoutSeparator />
-                                    <MenuFlyoutItem Text="Delete" Click="PlaylistDelete_Click" />
+                                    <MenuFlyoutItem Text="Rename..." Click="PlaylistRename_Click"
+                                                    Visibility="{x:Bind UserActionsVisibility}" />
+                                    <MenuFlyoutSeparator Visibility="{x:Bind UserActionsVisibility}" />
+                                    <MenuFlyoutItem Text="Delete" Click="PlaylistDelete_Click"
+                                                    Visibility="{x:Bind UserActionsVisibility}" />
                                 </MenuFlyout>
                             </Grid.ContextFlyout>
 
@@ -221,18 +226,29 @@
                       RightTapped="TrackList_RightTapped"
                       AutomationProperties.Name="Playlist tracks">
                 <ListView.ContextFlyout>
-                    <MenuFlyout>
-                        <MenuFlyoutItem Text="Remove from playlist" Click="RemoveTrack_Click" />
+                    <MenuFlyout Opening="TrackMenu_Opening">
+                        <MenuFlyoutItem x:Name="PlayNextItem" Text="Play next" Click="PlayNext_Click" />
+                        <MenuFlyoutItem x:Name="FavoriteItem" Text="Mark as favorite" Click="Favorite_Click" />
+                        <MenuFlyoutSeparator />
+                        <MenuFlyoutItem x:Name="RemoveTrackItem" Text="Remove from playlist" Click="RemoveTrack_Click" />
                     </MenuFlyout>
                 </ListView.ContextFlyout>
             </ListView>
 
             <controls:EmptyStateView Grid.Row="2"
                                      x:Name="EmptyPlaylistState"
-                                     x:Load="{x:Bind ViewModel.DetailIsEmpty, Mode=OneWay}"
+                                     x:Load="{x:Bind ViewModel.DetailIsEmptyUser, Mode=OneWay}"
                                      Glyph="&#xE710;"
                                      Title="Nothing in here yet"
                                      Message="Go to your Library, right-click any track, and choose Add to playlist." />
+
+            <!-- Step 19. Favorites cannot be filled through Add to playlist, so it says how it is. -->
+            <controls:EmptyStateView Grid.Row="2"
+                                     x:Name="EmptyFavoritesState"
+                                     x:Load="{x:Bind ViewModel.DetailIsEmptyFavorites, Mode=OneWay}"
+                                     Glyph="&#xE734;"
+                                     Title="Nothing in here yet"
+                                     Message="Right-click any track and choose Mark as favorite." />
         </Grid>
     </Grid>
 </Page>

@@ -130,7 +130,14 @@ public sealed partial class PlayerBarViewModel
             // Must not re-enter Play(): that re-fires MarkPlayed on every loop and inflates
             // play_count / Recently Played. CONSTRAINT M, design-plan Step 10b.
             _audio.Seek(TimeSpan.Zero);
-            _audio.TogglePlayPause();
+
+            // A finished track arrives here already paused, but the Next button and the media key
+            // arrive while it plays - toggling then would pause at 0:00 instead of restarting.
+            if (!_audio.IsPlaying)
+            {
+                _audio.TogglePlayPause();
+            }
+
             RememberPosition();
         }
         else

@@ -85,6 +85,12 @@ public sealed class PlaylistsViewModel : ObservableObject
     /// <summary>Show the "this playlist is empty" state. A different message from having no playlists at all.</summary>
     public bool DetailIsEmpty => _selected is not null && Tracks.Count == 0;
 
+    /// <summary>Step 19. Favorites is empty and open: its empty state points at Mark as favorite instead.</summary>
+    public bool DetailIsEmptyFavorites => DetailIsEmpty && _selected!.IsFavorites;
+
+    /// <summary>Step 19. Any other playlist is empty and open: the Add to playlist hint.</summary>
+    public bool DetailIsEmptyUser => DetailIsEmpty && !_selected!.IsFavorites;
+
     /// <summary>The index header's badge text. Pre-formatted here so no fourth converter is needed.</summary>
     public string PlaylistCount => _all.Count.ToString();
 
@@ -294,5 +300,23 @@ public sealed class PlaylistsViewModel : ObservableObject
         Raise(nameof(ShowDetail));
         Raise(nameof(DetailHasTracks));
         Raise(nameof(DetailIsEmpty));
+        Raise(nameof(DetailIsEmptyFavorites));
+        Raise(nameof(DetailIsEmptyUser));
+    }
+
+    /// <summary>
+    /// Step 19. Re-reads the open playlist after a favorite changed from its own track menu, so
+    /// unfavoriting inside Favorites takes the row away at once. A no-op anywhere else.
+    /// </summary>
+    public async Task RefreshIfFavoritesOpenAsync()
+    {
+        if (_selected is not { IsFavorites: true } playlist)
+        {
+            return;
+        }
+
+        await FillTracksAsync(playlist.Id);
+        await LoadAsync();
+        Selected = Find(playlist.Id);
     }
 }

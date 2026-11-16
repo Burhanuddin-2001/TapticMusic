@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
+using MusicPlayer.Data;
 using MusicPlayer.Services;
 
 namespace MusicPlayer.Views;
@@ -39,15 +40,30 @@ internal static class NamePrompt
         // BaseSize would overwrite a plain FontSize the moment the box entered the tree.
         TextScale.SetBaseSize(input, (double)Application.Current.Resources["FontSize.Input"]);
 
+        // Step 19. "Favorites" belongs to the app's own playlist. Every way of typing a playlist name
+        // comes through here - create, rename, and "New playlist..." in the Library - so this one
+        // check covers all three.
+        TextBlock reservedHint = new()
+        {
+            Style = (Style)Application.Current.Resources["Text.Caption"],
+            Text = $"{PlaylistRepository.FavoritesName} is kept for your favorite songs.",
+            TextWrapping = TextWrapping.Wrap,
+        };
+
+        StackPanel content = new()
+        {
+            Spacing = (double)Application.Current.Resources["Space.S"],
+            Children = { input, reservedHint },
+        };
+
         ContentDialog dialog = new()
         {
             XamlRoot = root,
             Title = title,
-            Content = input,
+            Content = content,
             PrimaryButtonText = primaryText,
             CloseButtonText = "Cancel",
             DefaultButton = ContentDialogButton.Primary,
-            IsPrimaryButtonEnabled = initial.Trim().Length > 0,
 
             // WinUI's ContentDialog template hands its default button WinUI's own AccentButtonStyle,
             // which is driven by SystemAccentColor — so the primary button wore the Windows accent
@@ -57,7 +73,15 @@ internal static class NamePrompt
             PrimaryButtonStyle = (Style)Application.Current.Resources["PillAccentButtonStyle"],
         };
 
-        input.TextChanged += (_, _) => dialog.IsPrimaryButtonEnabled = input.Text.Trim().Length > 0;
+        void Validate()
+        {
+            bool reserved = PlaylistRepository.IsReservedName(input.Text);
+            dialog.IsPrimaryButtonEnabled = input.Text.Trim().Length > 0 && !reserved;
+            reservedHint.Visibility = reserved ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        Validate();
+        input.TextChanged += (_, _) => Validate();
 
         if (await dialog.ShowAsync() != ContentDialogResult.Primary)
         {
@@ -66,6 +90,6 @@ internal static class NamePrompt
 
         string name = input.Text.Trim();
 
-        return name.Length > 0 ? name : null;
+        return name.Length > 0 && !PlaylistRepository.IsReservedName(name) ? name : null;
     }
 }

@@ -107,9 +107,16 @@ public sealed partial class LibraryPage : Page, IArrowHost
     /// </summary>
     private void TrackMenu_Opening(object sender, object e)
     {
+        // Step 19. Both need a row; a right-click on empty space leaves them disabled.
+        PlayNextItem.IsEnabled = _rightClicked is not null;
+        FavoriteItem.IsEnabled = _rightClicked is not null;
+        FavoriteItem.Text = FavoriteMenu.Label(_rightClicked);
+
         AddToPlaylistMenu.Items.Clear();
 
-        foreach (Playlist playlist in App.Playlists.GetPlaylists())
+        // Favorites is skipped: adding through here would get round its no-duplicates rule, and
+        // "Mark as favorite" above is the way in.
+        foreach (Playlist playlist in App.Playlists.GetPlaylists().Where(p => !p.IsFavorites))
         {
             MenuFlyoutItem item = new() { Text = playlist.Name, Tag = playlist.Id };
             item.Click += AddToPlaylist_Click;
@@ -125,6 +132,19 @@ public sealed partial class LibraryPage : Page, IArrowHost
         create.Click += NewPlaylistWithTrack_Click;
         AddToPlaylistMenu.Items.Add(create);
     }
+
+    // ---- Play next, favorites, Step 19 -------------------------------------------------------
+
+    private void PlayNext_Click(object sender, RoutedEventArgs e)
+    {
+        if (_rightClicked is Track track)
+        {
+            App.PlayerBar.PlayNext(track);
+        }
+    }
+
+    private async void Favorite_Click(object sender, RoutedEventArgs e)
+        => await FavoriteMenu.ToggleAsync(_rightClicked);
 
     private async void AddToPlaylist_Click(object sender, RoutedEventArgs e)
     {

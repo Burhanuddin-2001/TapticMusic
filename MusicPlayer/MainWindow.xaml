@@ -132,8 +132,20 @@
                               SelectionMode="Single"
                               IsItemClickEnabled="True"
                               ItemClick="QueueList_ItemClick"
+                              RightTapped="QueueList_RightTapped"
                               ItemContainerStyle="{StaticResource QueueRowItemStyle}"
-                              AutomationProperties.Name="Play queue" />
+                              AutomationProperties.Name="Play queue">
+                        <!-- Step 19. Event attributes only: A7b forbids bindings on this Window,
+                             not events. RightTapped records the row, Opening disables the item on
+                             the playing row and on empty space. -->
+                        <ListView.ContextFlyout>
+                            <MenuFlyout Opening="QueueMenu_Opening">
+                                <MenuFlyoutItem x:Name="RemoveFromQueueItem"
+                                                Text="Remove from queue"
+                                                Click="RemoveFromQueue_Click" />
+                            </MenuFlyout>
+                        </ListView.ContextFlyout>
+                    </ListView>
 
                     <controls:EmptyStateView x:Name="QueueEmptyState"
                                              Glyph="&#xE8FD;"

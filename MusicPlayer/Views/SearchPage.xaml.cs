@@ -1,3 +1,4 @@
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using MusicPlayer.Models;
 using MusicPlayer.ViewModels;
@@ -41,4 +42,27 @@ public sealed partial class SearchPage : Page, IArrowHost
             App.PlayerBar.PlayFrom(ViewModel.Tracks, ViewModel.Tracks.IndexOf(track));
         }
     }
+
+    // ---- Play next, favorites, Step 19 -------------------------------------------------------
+
+    /// <summary>The favorite item is the second one; its label flips with the track's state.</summary>
+    private void TrackMenu_Opening(object sender, object e)
+    {
+        MenuFlyout menu = (MenuFlyout)sender;
+        ((MenuFlyoutItem)menu.Items[1]).Text = FavoriteMenu.Label(menu.Target?.DataContext as Track);
+    }
+
+    /// <summary>A MenuFlyoutItem inherits the row's DataContext, which is the Track.</summary>
+    private static Track? TrackOf(object sender) => (sender as FrameworkElement)?.DataContext as Track;
+
+    private void PlayNext_Click(object sender, RoutedEventArgs e)
+    {
+        if (TrackOf(sender) is Track track)
+        {
+            App.PlayerBar.PlayNext(track);
+        }
+    }
+
+    private async void Favorite_Click(object sender, RoutedEventArgs e)
+        => await FavoriteMenu.ToggleAsync(TrackOf(sender));
 }

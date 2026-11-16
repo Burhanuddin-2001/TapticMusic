@@ -162,6 +162,38 @@ public sealed partial class PlaylistsPage : Page, IArrowHost
     private async void RemoveTrack_Click(object sender, RoutedEventArgs e)
         => await ViewModel.RemoveAtAsync(_rightClickedTrack);
 
+    // ---- Play next, favorites, Step 19 -------------------------------------------------------
+
+    /// <summary>The track under the last right-click, or null when it hit empty space.</summary>
+    private Track? RightClickedTrack
+        => _rightClickedTrack >= 0 && _rightClickedTrack < ViewModel.Tracks.Count
+            ? ViewModel.Tracks[_rightClickedTrack]
+            : null;
+
+    private void TrackMenu_Opening(object sender, object e)
+    {
+        Track? track = RightClickedTrack;
+        PlayNextItem.IsEnabled = track is not null;
+        FavoriteItem.IsEnabled = track is not null;
+        RemoveTrackItem.IsEnabled = track is not null;
+        FavoriteItem.Text = FavoriteMenu.Label(track);
+    }
+
+    private void PlayNext_Click(object sender, RoutedEventArgs e)
+    {
+        if (RightClickedTrack is Track track)
+        {
+            App.PlayerBar.PlayNext(track);
+        }
+    }
+
+    /// <summary>Unfavoriting from inside Favorites takes the row away, so that view is re-read.</summary>
+    private async void Favorite_Click(object sender, RoutedEventArgs e)
+    {
+        await FavoriteMenu.ToggleAsync(RightClickedTrack);
+        await ViewModel.RefreshIfFavoritesOpenAsync();
+    }
+
     // ---- shared -----------------------------------------------------------------------------
 
     /// <summary>

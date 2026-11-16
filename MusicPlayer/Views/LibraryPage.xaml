@@ -185,10 +185,14 @@
                 DataTemplate, so there is no per-item DataContext either: RightTapped records which
                 row was hit before the menu opens.
 
-                The submenu is filled in Opening because the playlist list is live.
+                The submenu is filled in Opening because the playlist list is live. Step 19: the
+                favorite label is read there too, for the same reason.
             -->
             <ListView.ContextFlyout>
                 <MenuFlyout Opening="TrackMenu_Opening">
+                    <MenuFlyoutItem x:Name="PlayNextItem" Text="Play next" Click="PlayNext_Click" />
+                    <MenuFlyoutItem x:Name="FavoriteItem" Text="Mark as favorite" Click="Favorite_Click" />
+                    <MenuFlyoutSeparator />
                     <MenuFlyoutSubItem x:Name="AddToPlaylistMenu" Text="Add to playlist" />
                 </MenuFlyout>
             </ListView.ContextFlyout>

@@ -122,6 +122,32 @@ public static class Db
         DROP INDEX IF EXISTS ix_tracks_played;
         """;
 
+    /// <summary>
+    /// Version 5, Step 19. Favorites: a real playlist row, marked by kind = 1 and never by its name.
+    /// Being a playlist is what gives it the tile, play, shuffle, drag-to-reorder and Remove from
+    /// playlist for free - and "Remove from playlist" inside it IS unfavorite.
+    ///
+    /// A user playlist already called "Favorites" (any case, any spaces) is DELETED, by decision on
+    /// 2026-11-15. Its playlist_tracks rows go by ON DELETE CASCADE, which is live because Migrate
+    /// runs on a Db.Open connection. The tracks and their files are untouched. The DELETE sits after
+    /// the ALTER and before the INSERT, or it would take the new system row with it.
+    ///
+    /// The partial unique index makes a second Favorites row impossible.
+    ///
+    /// created_utc comes from strftime, not Db.UtcNowText, because Migrate takes no parameters.
+    /// Nothing reads created_utc.
+    ///
+    /// NOT re-runnable (ALTER), the same standing as V3: safe because Migrate commits the DDL and
+    /// the stamp in one transaction.
+    /// </summary>
+    private const string V5Sql = """
+        ALTER TABLE playlists ADD COLUMN kind INTEGER NOT NULL DEFAULT 0;
+        DELETE FROM playlists WHERE lower(trim(name)) = 'favorites';
+        INSERT INTO playlists (name, created_utc, kind)
+        VALUES ('Favorites', strftime('%Y-%m-%dT%H:%M:%fZ', 'now'), 1);
+        CREATE UNIQUE INDEX IF NOT EXISTS ix_playlists_favorites ON playlists(kind) WHERE kind = 1;
+        """;
+
     private static string? _connectionString;
 
     /// <summary>
@@ -140,10 +166,10 @@ public static class Db
     /// wrote user_version = 1 without ever reading it back, so there was no way to add a table
     /// without either re-running everything or guessing what was already there.
     ///
-    /// Every path ends at the newest version. A new database reads 0 and runs V1 through V4. A
-    /// database from Step 12 reads 3 and runs V4 only. One from Step 11 reads 2 and runs V3 then V4,
-    /// keeping its scanned tracks, play counts and last-played times. Older still reads 1 and runs
-    /// V2 onward.
+    /// Every path ends at the newest version. A new database reads 0 and runs V1 through V5. A
+    /// database from Step 14 to v1.3 reads 4 and runs V5 only. One from Step 12 reads 3 and runs V4
+    /// then V5. One from Step 11 reads 2 and runs V3 onward, keeping its scanned tracks, play counts
+    /// and last-played times. Older still reads 1 and runs V2 onward.
     /// </summary>
     public static void EnsureCreated()
     {
@@ -173,6 +199,11 @@ public static class Db
         if (version < 4)
         {
             Migrate(conn, V4Sql, 4);
+        }
+
+        if (version < 5)
+        {
+            Migrate(conn, V5Sql, 5);
         }
     }
 

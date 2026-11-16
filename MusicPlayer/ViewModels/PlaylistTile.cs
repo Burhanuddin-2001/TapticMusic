@@ -1,3 +1,4 @@
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using MusicPlayer.Data;
 
@@ -46,4 +47,13 @@ public sealed class PlaylistTile
 
     /// <summary>Total runtime in milliseconds, for the tile's clock text. Pass-through, as Name.</summary>
     public long TotalMs => Playlist.TotalMs;
+
+    /// <summary>Step 19. The app-kept Favorites playlist. Pass-through, as Name.</summary>
+    public bool IsFavorites => Playlist.IsFavorites;
+
+    /// <summary>
+    /// Step 19. Hides Rename and Delete on the Favorites tile, so its menu is just Play. A Visibility
+    /// rather than a bool, so the DataTemplate needs no new converter.
+    /// </summary>
+    public Visibility UserActionsVisibility => IsFavorites ? Visibility.Collapsed : Visibility.Visible;
 }

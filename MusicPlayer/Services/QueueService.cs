@@ -212,6 +212,88 @@ public sealed class QueueService
         return Current;
     }
 
+    /// <summary>
+    /// Step 19. Puts a track right after the playing one, in both modes. Repeated calls are
+    /// last-in, plays-first, which is what "play next" means.
+    ///
+    /// The track goes into _source NEXT TO the current track, not at the end. That is what keeps it
+    /// next when shuffle is later turned off: un-shuffle rebuilds _order as the identity and lands
+    /// the cursor on the current source index, so the inserted row is still the one after it.
+    /// Turning shuffle ON afterwards reshuffles it away like everything else - accepted.
+    ///
+    /// A COPY is stored, never the caller's object. The same reference twice in Items breaks the
+    /// rail's selection and QueueList_ItemClick, which finds a row with IndexOf (first match wins).
+    /// Returns false on an empty queue: there is no "next" without a "now", and the caller starts it.
+    /// </summary>
+    public bool InsertNext(Track track)
+    {
+        if (_order.Count == 0)
+        {
+            return false;
+        }
+
+        int srcPos = _order[_cursor] + 1;
+
+        for (int k = 0; k < _order.Count; k++)
+        {
+            if (_order[k] >= srcPos)
+            {
+                _order[k]++;
+            }
+        }
+
+        _source.Insert(srcPos, new Track
+        {
+            Id = track.Id,
+            Path = track.Path,
+            Title = track.Title,
+            Artist = track.Artist,
+            Album = track.Album,
+            DurationMs = track.DurationMs,
+            Unreadable = track.Unreadable,
+            ArtKey = track.ArtKey,
+            Ordinal = track.Ordinal,
+        });
+        _order.Insert(_cursor + 1, srcPos);
+
+        Changed?.Invoke(this, EventArgs.Empty);
+        return true;
+    }
+
+    /// <summary>
+    /// Step 19. Removes one row of the rail, by its index in Items - by position and not by track,
+    /// for the same reason a playlist remove is. The playing row is refused: removing the song you
+    /// are hearing would need a "what plays now" rule, and Next already does that job. Because of
+    /// that the queue can never be emptied from here.
+    /// </summary>
+    public bool RemoveAt(int indexInItems)
+    {
+        if (indexInItems < 0 || indexInItems >= _order.Count || indexInItems == _cursor)
+        {
+            return false;
+        }
+
+        int src = _order[indexInItems];
+        _order.RemoveAt(indexInItems);
+        _source.RemoveAt(src);
+
+        for (int k = 0; k < _order.Count; k++)
+        {
+            if (_order[k] > src)
+            {
+                _order[k]--;
+            }
+        }
+
+        if (indexInItems < _cursor)
+        {
+            _cursor--;
+        }
+
+        Changed?.Invoke(this, EventArgs.Empty);
+        return true;
+    }
+
     /// <summary>Fisher-Yates, then the playing track is moved to the front so it keeps playing.</summary>
     private void ShuffleKeeping(int sourceIndexToKeepFirst)
     {

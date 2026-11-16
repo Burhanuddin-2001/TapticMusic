@@ -46,6 +46,10 @@
          rather than two. -->
     <x:Double x:Key="FontSize.Heading2">18</x:Double>
 
+    <!-- v1.3. Text.Title's size, as a key so the window title can take it UNSCALED. See
+         StyleTitleBarText in MainWindow.xaml.cs. -->
+    <x:Double x:Key="FontSize.Title">14</x:Double>
+
     <!-- Step 13. A dialog input is the one place in the app the user is actively TYPING into and
          reading back a single short string, so 13 reads too small there. Only NamePrompt uses it;
          a literal in that file would break the no-inline-values rule, so it lives here. -->
@@ -82,7 +86,7 @@
 
     <Style x:Key="Text.Title" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource Font.Display}" />
-        <Setter Property="services:TextScale.BaseSize" Value="14" />
+        <Setter Property="services:TextScale.BaseSize" Value="{StaticResource FontSize.Title}" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Foreground" Value="{ThemeResource Brush.Text.Primary}" />
     </Style>

@@ -94,7 +94,15 @@
                               AutomationProperties.Name="Matching tracks">
                         <ListView.ItemTemplate>
                             <DataTemplate x:DataType="models:Track">
+                                <!-- Step 19. Per item, on the DataTemplate root, so each row gets its
+                                     own flyout and the Track is its Target's DataContext. -->
                                 <StackPanel>
+                                    <StackPanel.ContextFlyout>
+                                        <MenuFlyout Opening="TrackMenu_Opening">
+                                            <MenuFlyoutItem Text="Play next" Click="PlayNext_Click" />
+                                            <MenuFlyoutItem Text="Mark as favorite" Click="Favorite_Click" />
+                                        </MenuFlyout>
+                                    </StackPanel.ContextFlyout>
                                     <TextBlock Style="{StaticResource Text.Title}"
                                                Text="{x:Bind Title}"
                                                TextTrimming="CharacterEllipsis"

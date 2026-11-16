@@ -91,6 +91,6 @@
     <AppxBundlePlatforms>x64</AppxBundlePlatforms>
     <HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
     <PackageCertificateThumbprint>4EB02ABBA070E082FFA47A39017C1EC9F1B7E925</PackageCertificateThumbprint>
-    <AppxPackageDir>C:\Users\HUSSU\Desktop\New folder\</AppxPackageDir>
+    <AppxPackageDir>C:\Users\HUSSU\Desktop\taptip repo pack\</AppxPackageDir>
   </PropertyGroup>
 </Project>

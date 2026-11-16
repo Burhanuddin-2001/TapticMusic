@@ -110,6 +110,25 @@ public sealed partial class PlayerBarViewModel
     public void ToggleShuffle() => Shuffle = !Shuffle;
 
     /// <summary>
+    /// Step 19. "Play next" from any track menu. Goes in right after the playing track; on an empty
+    /// queue it simply starts, because there is no "next" without a "now". Repeat-one is left alone:
+    /// the current song keeps looping and this one waits (decision 8.2).
+    /// </summary>
+    public void PlayNext(Track track)
+    {
+        if (!_queue.InsertNext(track))
+        {
+            PlayFrom([track], 0);
+        }
+    }
+
+    /// <summary>
+    /// Step 19. Removes a row from the rail. The queue refuses the playing row and a stale index, so
+    /// this needs no checks of its own; the rail re-reads everything from OnQueueChanged.
+    /// </summary>
+    public void RemoveFromQueue(int index) => _queue.RemoveAt(index);
+
+    /// <summary>
     /// The Library's Shuffle button. Turns the mode on and starts on a random track.
     ///
     /// Distinct from PlayFrom with shuffle already on: there the user picked a row and QueueService

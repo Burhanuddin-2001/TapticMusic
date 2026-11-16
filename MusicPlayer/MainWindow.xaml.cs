@@ -64,6 +64,10 @@ public sealed partial class MainWindow : Window
 
         AppWindow.SetIcon("Assets/AppIcon.ico");
 
+        // Queued, not run inline: PART_TitleText is x:DeferLoadStrategy="Lazy" and is only realised
+        // when the control moves to its TitleTextVisible state, which can land after this Loaded.
+        AppTitleBar.Loaded += (_, _) => DispatcherQueue.TryEnqueue(StyleTitleBarText);
+
         // Step 13. THE FIRST Apply, and the reason it lives here rather than in App. Application
         // .Resources is not reachable from the App constructor — get_Resources throws COMException
         // 0x8000FFFF that early, even after InitializeComponent. Here it is provably live, because
@@ -162,24 +166,80 @@ public sealed partial class MainWindow : Window
     ///
     /// The rail then follows the playing row, but only while the row that WAS playing is on screen.
     /// Scroll away on purpose and it stays where you put it.
+    ///
+    /// Step 19. A Play Next or a Remove from queue also replaces the list, and must not throw the
+    /// rail back to the playing row - removing row 40 used to snap you to row 3. An EDIT is a
+    /// replacement where the playing track is the same object before and after and the count moved
+    /// by exactly one. On an edit the scroll offset is put back (reassigning ItemsSource resets it),
+    /// and the rail follows only if the playing row was already in view.
     /// </summary>
     private void SyncQueue()
     {
         IReadOnlyList<Track> items = Player.QueueItems;
-        bool replaced = QueueList.ItemsSource is not IReadOnlyList<Track> shown || !shown.SequenceEqual(items);
-        bool following = replaced || IsQueueRowInView(QueueList.SelectedIndex);
+        IReadOnlyList<Track>? shown = QueueList.ItemsSource as IReadOnlyList<Track>;
+        bool replaced = shown is null || !shown.SequenceEqual(items);
+        bool wasInView = IsQueueRowInView(QueueList.SelectedIndex);
 
-        if (replaced)
+        int oldIndex = QueueList.SelectedIndex;
+        int newIndex = Player.QueueIndex;
+        bool edit = replaced
+                    && shown is not null
+                    && Math.Abs(items.Count - shown.Count) == 1
+                    && oldIndex >= 0 && oldIndex < shown.Count
+                    && newIndex >= 0 && newIndex < items.Count
+                    && ReferenceEquals(shown[oldIndex], items[newIndex]);
+
+        if (!replaced)
         {
-            QueueList.ItemsSource = items;
+            QueueList.SelectedIndex = newIndex;
+
+            if (wasInView)
+            {
+                BringQueueRowIntoView(newIndex, false);
+            }
+
+            return;
         }
 
-        QueueList.SelectedIndex = Player.QueueIndex;
+        ScrollViewer? viewer = QueueScrollViewer();
+        double offset = viewer?.VerticalOffset ?? 0;
 
-        if (following)
+        QueueList.ItemsSource = items;
+        QueueList.SelectedIndex = newIndex;
+
+        if (!edit)
         {
-            BringQueueRowIntoView(Player.QueueIndex, replaced);
+            BringQueueRowIntoView(newIndex, true);
+            return;
         }
+
+        // Layout first, or the new list has no extent yet and the offset is clamped to zero.
+        QueueList.UpdateLayout();
+        viewer?.ChangeView(null, offset, null, true);
+
+        if (wasInView)
+        {
+            QueueList.UpdateLayout();
+            BringQueueRowIntoView(newIndex, false);
+        }
+    }
+
+    /// <summary>A ListView's template is one Border around its ScrollViewer; walk down to it.</summary>
+    private ScrollViewer? QueueScrollViewer()
+    {
+        DependencyObject node = QueueList;
+
+        while (VisualTreeHelper.GetChildrenCount(node) > 0)
+        {
+            node = VisualTreeHelper.GetChild(node, 0);
+
+            if (node is ScrollViewer viewer)
+            {
+                return viewer;
+            }
+        }
+
+        return null;
     }
 
     private bool IsQueueRowInView(int index)
@@ -379,6 +439,46 @@ public sealed partial class MainWindow : Window
            && host.ArrowTarget is Control target
            && target.Focus(FocusState.Keyboard);
 
+    /// <summary>
+    /// v1.3. The window title was the one piece of text still in Segoe. TitleBar's template draws it
+    /// with {StaticResource CaptionTextBlockStyle}, resolved inside generic.xaml's own scope, so no
+    /// app-level key can reach it - the same wall Styles/ContentDialog.xaml documents. So the part is
+    /// found once it exists and given Text.Title's font and size directly.
+    ///
+    /// Not scaled by the text-size dial, deliberately: the bar is window chrome with a fixed 40px
+    /// height (TitleBarExpandedHeight), the same as the caption glyphs, and 250% would clip it.
+    /// </summary>
+    private void StyleTitleBarText()
+    {
+        if (FindNamed<TextBlock>(AppTitleBar, "PART_TitleText") is not TextBlock title)
+        {
+            return;
+        }
+
+        title.FontFamily = (FontFamily)Application.Current.Resources["Font.Display"];
+        title.FontSize = (double)Application.Current.Resources["FontSize.Title"];
+    }
+
+    private static T? FindNamed<T>(DependencyObject root, string name) where T : FrameworkElement
+    {
+        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++)
+        {
+            DependencyObject child = VisualTreeHelper.GetChild(root, i);
+
+            if (child is T match && match.Name == name)
+            {
+                return match;
+            }
+
+            if (FindNamed<T>(child, name) is T found)
+            {
+                return found;
+            }
+        }
+
+        return null;
+    }
+
     private void MinimizeButton_Click(object sender, RoutedEventArgs e)
         => (AppWindow.Presenter as OverlappedPresenter)?.Minimize();
 
@@ -417,6 +517,32 @@ public sealed partial class MainWindow : Window
 
     private void QueueList_ItemClick(object sender, ItemClickEventArgs e)
         => Player.JumpTo(((ListView)sender).Items.IndexOf(e.ClickedItem));
+
+    // ---- Remove from queue, Step 19 ---------------------------------------------------------
+
+    /// <summary>Which rail row the last right-click landed on, or -1 for empty space.</summary>
+    private int _rightClickedQueueRow = -1;
+
+    /// <summary>Walks up from what was clicked to its row, the same walk PlaylistsPage.IndexFromSource does.</summary>
+    private void QueueList_RightTapped(object sender, RightTappedRoutedEventArgs e)
+    {
+        DependencyObject? node = e.OriginalSource as DependencyObject;
+
+        while (node is not null and not ListViewItem)
+        {
+            node = VisualTreeHelper.GetParent(node);
+        }
+
+        _rightClickedQueueRow = node is ListViewItem item ? QueueList.IndexFromContainer(item) : -1;
+    }
+
+    /// <summary>Disabled on the playing row and on empty space. The queue would refuse both anyway.</summary>
+    private void QueueMenu_Opening(object sender, object e)
+        => RemoveFromQueueItem.IsEnabled = _rightClickedQueueRow >= 0
+                                           && _rightClickedQueueRow != Player.QueueIndex;
+
+    private void RemoveFromQueue_Click(object sender, RoutedEventArgs e)
+        => Player.RemoveFromQueue(_rightClickedQueueRow);
 
     private void ErrorBar_CloseButtonClick(InfoBar sender, object args) => Player.DismissError();
 }

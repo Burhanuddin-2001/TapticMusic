@@ -40,6 +40,7 @@
     <Style TargetType="MenuFlyoutItem">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="Foreground" Value="{ThemeResource Brush.Text.Primary}" />
+        <Setter Property="services:TextScale.BaseSize" Value="{StaticResource FontSize.Body}" />
         <Setter Property="CornerRadius" Value="{StaticResource Radius.Sharp}" />
         <Setter Property="Template">
             <Setter.Value>

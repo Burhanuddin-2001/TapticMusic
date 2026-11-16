@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using Windows.Media.Devices;
 
 // This file is the ONLY native interop in the application, and that is deliberate rather than drift.
 // There is no WinRT and no managed API for the Windows master volume at all - Core Audio COM is the
@@ -40,12 +41,34 @@ internal static class SystemVolume
 
     private static IAudioEndpointVolume? _endpoint;
 
+    /// <summary>The default device the cached handle was activated for.</summary>
+    private static string? _endpointDeviceId;
+
     /// <summary>
-    /// The endpoint handle, activated on first use. Null means the machine has no usable default
-    /// playback device - an RDP session, or every output unplugged - and every caller below treats
-    /// that as "no system volume available" rather than as an error.
+    /// The endpoint handle, activated on first use and again whenever the default device moves. Null
+    /// means the machine has no usable default playback device - an RDP session, or every output
+    /// unplugged - and every caller below treats that as "no system volume available" rather than as
+    /// an error.
     /// </summary>
-    private static IAudioEndpointVolume? Endpoint => _endpoint ??= Activate();
+    private static IAudioEndpointVolume? Endpoint
+    {
+        get
+        {
+            // Plugging headphones in or out moves the default device, and the old handle does not
+            // fail when that happens - it keeps driving the old device, so no failure ever reaches
+            // Forget. Nothing tells this class (no COM callback, Plan-18.md), so it asks on every
+            // call. That is a managed WinRT call, measured at about half a millisecond.
+            string? id = MediaDevice.GetDefaultAudioRenderId(AudioDeviceRole.Default);
+
+            if (id != _endpointDeviceId)
+            {
+                Forget();
+                _endpointDeviceId = id;
+            }
+
+            return _endpoint ??= Activate();
+        }
+    }
 
     /// <summary>
     /// Sets the master volume. The scalar is the audio-tapered 0.0-1.0 value, which is exactly the
